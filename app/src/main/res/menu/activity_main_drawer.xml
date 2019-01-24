@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <group android:checkableBehavior="single">
+        <item
+            android:id="@+id/nav_profile"
+            android:checkable="false"
+            android:icon="@drawable/ic_menu_manage"
+            android:title="Profile" />
+        <item
+            android:id="@+id/nav_repos"
+            android:checkable="false"
+            android:icon="@android:drawable/ic_input_get"
+            android:title="Repositories" />
+    </group>
+
+    <item android:title="Connections">
+        <menu>
+            <item
+                android:id="@+id/nav_following"
+                android:icon="@android:drawable/btn_star_big_on"
+                android:title="Following" />
+            <item
+                android:id="@+id/nav_followers"
+                android:icon="@drawable/ic_menu_share"
+                android:title="Followers" />
+            <item
+                android:id="@+id/nav_notifications"
+                android:checkable="false"
+                android:icon="@android:drawable/ic_popup_reminder"
+                android:title="Notifications" />
+        </menu>
+    </item>
+
+</menu>

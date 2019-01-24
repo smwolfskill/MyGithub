@@ -1,0 +1,4 @@
+-See if main thread can handle signal that worker thread returned, WITHOUT WAITING.
+	-This will be sol'n. to the problem!
+
+-RetroFit lib?

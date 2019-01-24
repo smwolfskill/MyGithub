@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.example.assignment30.ProfileFragment">
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginLeft="10dp"
+        android:layout_marginRight="10dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <TextView
+                    android:id="@+id/tv_Profile_name"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentEnd="true"
+                    android:layout_alignParentRight="true"
+                    android:layout_alignParentTop="true"
+                    android:layout_marginBottom="2dp"
+                    android:layout_marginTop="16dp"
+                    android:text="[Profile name]"
+                    android:textAppearance="@style/TextAppearance.AppCompat.Headline" />
+
+                <TextView
+                    android:id="@+id/tv_Profile_username"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentEnd="true"
+                    android:layout_alignParentRight="true"
+                    android:layout_below="@+id/tv_Profile_name"
+                    android:layout_marginBottom="5dp"
+                    android:text="[Username]"
+                    android:textAppearance="@android:style/TextAppearance.DeviceDefault" />
+
+                <TextView
+                    android:id="@+id/tv_Profile_email"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentEnd="true"
+                    android:layout_alignParentRight="true"
+                    android:layout_below="@+id/tv_Profile_username"
+                    android:layout_marginBottom="5dp"
+                    android:text="[email@address.com]"
+                    android:textAppearance="@android:style/TextAppearance.DeviceDefault"/>
+
+                <TextView
+                    android:id="@+id/tv_Profile_website"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentEnd="true"
+                    android:layout_alignParentRight="true"
+                    android:layout_below="@+id/tv_Profile_email"
+                    android:layout_marginBottom="5dp"
+                    android:text="[website.com]"
+                    android:textAppearance="@android:style/TextAppearance.DeviceDefault"/>
+
+                <ImageView
+                    android:id="@+id/iv_Profile_Pic"
+                    android:layout_width="110dp"
+                    android:layout_height="110dp"
+                    android:layout_alignParentLeft="true"
+                    android:layout_alignParentStart="true"
+                    android:layout_alignParentTop="true"
+                    android:layout_marginBottom="16dp"
+                    android:layout_marginTop="16dp"
+                    android:visibility="visible"
+                    app:srcCompat="@android:drawable/presence_busy" />
+
+            </RelativeLayout>
+
+            <TextView
+                android:id="@+id/tv_Profile_bio"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:paddingLeft="6dp"
+                android:paddingRight="6dp"
+                android:text="[bio]"
+                android:textAppearance="@android:style/TextAppearance.DeviceDefault"/>
+
+            <Button
+                android:id="@+id/btn_Profile_Repos"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:onClick="btn_click"
+                android:paddingLeft="10dp"
+                android:paddingRight="10dp"
+                android:text="[#] Repos"
+                android:textAllCaps="false" />
+
+            <Button
+                android:id="@+id/btn_Profile_Following"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:onClick="btn_click"
+                android:paddingLeft="10dp"
+                android:paddingRight="10dp"
+                android:text="[#] Following"
+                android:textAllCaps="false" />
+
+            <Button
+                android:id="@+id/btn_Profile_Followers"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:onClick="btn_click"
+                android:paddingLeft="10dp"
+                android:paddingRight="10dp"
+                android:text="[#] Followers"
+                android:textAllCaps="false" />
+
+            <TextView
+                android:id="@+id/tv_Profile_date"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginBottom="@dimen/activity_vertical_margin"
+                android:layout_marginTop="@dimen/activity_vertical_margin"
+                android:paddingLeft="6dp"
+                android:paddingRight="6dp"
+                android:text="Member since [date]." />
+        </LinearLayout>
+    </ScrollView>
+
+
+</RelativeLayout>

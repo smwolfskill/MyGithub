@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/content_main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    app:layout_behavior="@string/appbar_scrolling_view_behavior"
+    tools:context="com.example.assignment30.MainActivity"
+    tools:showIn="@layout/app_bar_main">
+
+    <RelativeLayout
+        android:id="@+id/rl_main_search"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/searchGray"
+        android:focusableInTouchMode="true"
+        android:paddingBottom="0dp"
+        android:paddingEnd="8dp"
+        android:paddingStart="8dp"
+        android:paddingTop="8dp">
+
+        <RadioGroup
+            android:id="@+id/rg_options"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:orientation="horizontal">
+
+            <RadioButton
+                android:id="@+id/rad_users"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:layout_weight="1"
+                android:checked="true"
+                android:text="Users" />
+
+            <RadioButton
+                android:id="@+id/rad_repos"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="4dp"
+                android:layout_weight="1"
+                android:text="Repos" />
+
+
+        </RadioGroup>
+
+        <EditText
+            android:id="@+id/et_search"
+            android:layout_width="112dp"
+            android:layout_height="wrap_content"
+            android:layout_toStartOf="@+id/btnSearch"
+            android:layout_marginRight="4dp"
+            android:ems="10"
+            android:hint="Search"
+            android:inputType="textPersonName"
+            android:maxLines="1"
+            android:selectAllOnFocus="false"
+            android:textAlignment="viewStart"
+            android:textAppearance="@style/TextAppearance.AppCompat.Small.Inverse" />
+
+        <Button
+            android:id="@+id/btnSearch"
+            android:layout_width="55dp"
+            android:layout_height="40dp"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentTop="true"
+            android:elevation="0dp"
+            android:onClick="btn_click"
+            android:text="Go" />
+    </RelativeLayout>
+
+    <android.support.constraint.ConstraintLayout
+        android:id="@+id/cl_main"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/rl_main_search">
+    </android.support.constraint.ConstraintLayout>
+
+</RelativeLayout>
