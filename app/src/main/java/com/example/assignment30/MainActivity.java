@@ -17,20 +17,22 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.RadioButton;
 
+import static com.example.assignment30.GithubParser.LoadLoginInfo;
+
 /**
  * MainActivity --- Main entry point in the program that also handles nav_bar navigation.
  *
  * @author      Scott Wolfskill, wolfski2
  * @created     10/23/2017
- * @last_edit   11/06/2017
+ * @last_edit   01/26/2019
  */
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
     public DB db;
     private boolean shownFragments = false; //if true, have shown a fragment
-    private final String startUser = "smwolfskill";//"tengyifei";
+    private final String startUser = "smwolfskill"; //will default to this GitHub profile if loading login info fails
     private String oldUsersQuery = ""; //previous search query for users.
-    private String oldReposQuery = ""; //... for repos.
+    private String oldReposQuery = ""; //previous search query for repos.
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,18 +50,22 @@ public class MainActivity extends AppCompatActivity
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
-
-        //2. Init. DB and activities fragments
+        //2. Load GitHub user/token info if present
+        boolean loadSuccess = GithubParser.LoadLoginInfo();
+        if(!loadSuccess) {
+            //TODO: Show some popup message and give location of login file
+        }
+        //3. Init. DB and activities fragments
         db = new DB();
         initFragments();
         Notification.setGetReason();
 
-        //2. Start loading & populating the DB asynchronously
+        //4. Start loading & populating the DB asynchronously
         boolean[] mode = new boolean[] {true, true, true, true, true, false}; //get all 4: profile, repos, following, followers
         GithubParser.Param param = new GithubParser.Param(db, startUser, mode);
         db.startDataExtraction(param);
 
-        //3. Show content with default page
+        //5. Show content with default page
         displaySelectedContent(R.id.nav_profile);   // set default content as Profile page
     }
 

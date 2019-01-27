@@ -1,21 +1,18 @@
 package com.example.assignment30;
 
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.util.Log;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.Scanner;
 
 import org.eclipse.egit.github.core.Repository;
 import org.eclipse.egit.github.core.User;
@@ -31,12 +28,14 @@ import org.eclipse.egit.github.core.service.UserService;
  *                  for obtaining GitHub info via their API and parsing it.
  * @author      Scott Wolfskill, wolfski2
  * @created     10/23/2017
- * @last_edit   11/06/2017
+ * @last_edit   01/26/2019
  */
 public class GithubParser extends AsyncTask<GithubParser.Param, Void, GithubParser.ReturnInfo> {
-    public static final String START_USER = "smwolfskill";
-    private static final String TOKEN = "5a01edffe913febfcc0689bae052282881312ef7"; //TOKEN to access read-only info for my GitHub
-
+    public static String login_filename = "/login.txt"; //filename containing login_user and login_token
+    public static String login_user = null;   //GitHub username
+    private static String login_token = null; //login_token to access read-only info for login_user
+    private static String login_user_dummy = "GitHub username";
+    private static String login_token_dummy = "personal access token";
 
     /**
      * Param --- Passed as parameter into this async task.
@@ -54,7 +53,7 @@ public class GithubParser extends AsyncTask<GithubParser.Param, Void, GithubPars
          *             mode[1] true => acquire repos of (targetName).
          *             mode[2] true => acquire following of (targetName).
          *             mode[3] true => acquire followers of (targetName).
-         *             mode[4] true => acquire notifications of START_USER.
+         *             mode[4] true => acquire notifications of login_user.
          *             mode[5] true => search mode.
          */
         public Param(DB db, String targetName, boolean[] mode) {
@@ -89,7 +88,39 @@ public class GithubParser extends AsyncTask<GithubParser.Param, Void, GithubPars
 
 
     /**
-     * Parse required GitHub fields for user with TOKEN and update the DB with them.
+     * Attempt to load and set login info from login_filename.
+     * @return true if both login_user and login_token have been loaded and set successfully, false otherwise.
+     */
+    public static boolean LoadLoginInfo() {
+        boolean success = false;
+        try {
+            InputStream stream = GithubParser.class.getResourceAsStream(login_filename);
+            InputStreamReader streamReader = new InputStreamReader(stream);
+            BufferedReader rd = new BufferedReader(streamReader);
+            String line;
+            line = rd.readLine();
+            if(line != null && !line.equals(login_user_dummy)) {
+                login_user = line;
+                line = rd.readLine();
+                if(line != null && !line.equals(login_token_dummy)) {
+                    login_token = line;
+                    success = true;
+                }
+            }
+            rd.close();
+        } catch (Exception e) {
+            Log.e("LoadLoginInfo", "FAILED w/ exception '" + e.getMessage() + "'");
+        }
+        if(success) {
+            Log.d("LoadLoginInfo", login_user + " login info loaded successfully from " + login_filename);
+        } else {
+            Log.d("LoadLoginInfo", " login info could not be loaded from " + login_filename);
+        }
+        return success;
+    }
+
+    /**
+     * Parse required GitHub fields for user with login_token and update the DB with them.
      * @param param String array {"target name", mode} where mode is in format:
      *                      includes GET_PROFILE : get Profile of "target name"
      *                      includes GET_REPOS : get Repos of "target name"
@@ -134,22 +165,22 @@ public class GithubParser extends AsyncTask<GithubParser.Param, Void, GithubPars
 
     /**
      * Get and parse Profile information for the user, and return the info as a new Profile.
-     * @param targetName GitHub username of target to obtain Profile of. If null, does TOKEN user.
-     * @return Profile of user with targetName or TOKEN.
+     * @param targetName GitHub username of target to obtain Profile of. If null, does login_user
+     * @return Profile of user with targetName or login_token.
     */
     public Profile getProfile(String targetName) {
         Log.d("getProfile", "Starting Profile extraction...");
         Profile profile = null;
 
         GitHubClient client = null;
-        if(targetName.equals(START_USER)) { //authenticate for start user
+        if(targetName.equals(login_user)) { //authenticate for start user
             client = new GitHubClient();
-            client.setOAuth2Token(TOKEN);
+            client.setOAuth2Token(login_token);
         }
         try {
             UserService service;
             User usr;
-            if(targetName.equals(START_USER)) {
+            if(targetName.equals(login_user)) {
                 service = new UserService(client);
                 usr = service.getUser(); //authenticated request
             } else {
@@ -174,21 +205,21 @@ public class GithubParser extends AsyncTask<GithubParser.Param, Void, GithubPars
 
     /**
      * Get and parse Repositories that the user is in.
-     * @param targetName GitHub username of target to obtain Repos of. If null, does TOKEN user.
-     * @return Repositories Array of targetName or TOKEN.
+     * @param targetName GitHub username of target to obtain Repos of. If null, does login_token user.
+     * @return Repositories Array of targetName or login_token.
      */
     public Repository[] getRepos(String targetName) {
         Log.d("getRepos", "Starting repos extraction...");
         Repository[] repos = null;
 
         GitHubClient client = null;
-        if(targetName.equals(START_USER)) {
+        if(targetName.equals(login_user)) {
             client = new GitHubClient();
-            client.setOAuth2Token(TOKEN);
+            client.setOAuth2Token(login_token);
         }
         try {
             RepositoryService service;
-            if(targetName.equals(START_USER)) {
+            if(targetName.equals(login_user)) {
                 service = new RepositoryService(client);
             } else {
                 service = new RepositoryService();
@@ -247,14 +278,14 @@ public class GithubParser extends AsyncTask<GithubParser.Param, Void, GithubPars
         }
 
         GitHubClient client = null;
-        if(targetName.equals(START_USER)) { //authenticate if start user
+        if(targetName.equals(login_user)) { //authenticate if start user
             client = new GitHubClient();
-            client.setOAuth2Token(TOKEN);
+            client.setOAuth2Token(login_token);
         }
 
         try {
             UserService service;
-            if(targetName.equals(START_USER)) {
+            if(targetName.equals(login_user)) {
                 service = new UserService(client);
             } else {
                 service = new UserService();
@@ -288,7 +319,7 @@ public class GithubParser extends AsyncTask<GithubParser.Param, Void, GithubPars
         Notification[] notifications = null;
 
         GitHubClient client = new GitHubClient();
-        client.setOAuth2Token(TOKEN);
+        client.setOAuth2Token(login_token);
         GitHubRequest request = new GitHubRequest();
         request.setUri("/notifications");
         HashMap<String, String> params = new HashMap<>(1);
@@ -332,7 +363,7 @@ public class GithubParser extends AsyncTask<GithubParser.Param, Void, GithubPars
         Profile[] profiles = null;
 
         GitHubClient client = new GitHubClient();
-        client.setOAuth2Token(TOKEN);
+        client.setOAuth2Token(login_token);
         GitHubRequest request = new GitHubRequest();
         request.setUri("/search/users");
         HashMap<String, String> params = new HashMap<>(1);
@@ -377,7 +408,7 @@ public class GithubParser extends AsyncTask<GithubParser.Param, Void, GithubPars
         Repository[] repos = null;
 
         GitHubClient client = new GitHubClient();
-        client.setOAuth2Token(TOKEN);
+        client.setOAuth2Token(login_token);
         GitHubRequest request = new GitHubRequest();
         request.setUri("/search/repositories");
         HashMap<String, String> params = new HashMap<>(1);
