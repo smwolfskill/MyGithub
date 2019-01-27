@@ -1,8 +1,8 @@
 package com.example.assignment30;
 
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.os.Handler;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.FragmentTransaction;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -16,8 +16,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.RadioButton;
-
-import static com.example.assignment30.GithubParser.LoadLoginInfo;
 
 /**
  * MainActivity --- Main entry point in the program that also handles nav_bar navigation.
@@ -51,10 +49,7 @@ public class MainActivity extends AppCompatActivity
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
         //2. Load GitHub user/token info if present
-        boolean loadSuccess = GithubParser.LoadLoginInfo();
-        if(!loadSuccess) {
-            //TODO: Show some popup message and give location of login file
-        }
+        boolean loadLoginInfoSuccess = GithubParser.LoadLoginInfo();
         //3. Init. DB and activities fragments
         db = new DB();
         initFragments();
@@ -67,6 +62,29 @@ public class MainActivity extends AppCompatActivity
 
         //5. Show content with default page
         displaySelectedContent(R.id.nav_profile);   // set default content as Profile page
+
+        //6. If failed to load user login info, show popup after a delay.
+        if(!loadLoginInfoSuccess) {
+            ShowLoadLoginInfoFailedPopup(1000);
+        }
+    }
+
+    /**
+     * Show popup message notifying user that loading their GitHub login info has failed.
+     * @param delayMillis Delay in milliseconds before showing the popup.
+     */
+    private void ShowLoadLoginInfoFailedPopup(int delayMillis) {
+        final Handler handler = new Handler();
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                Snackbar loadFailed = Snackbar.make(
+                        findViewById(R.id.drawer_layout),
+                        R.string.loadLoginInfoFailed,
+                        Snackbar.LENGTH_LONG);
+                loadFailed.show();
+            }
+        }, delayMillis);
     }
 
     @Override
