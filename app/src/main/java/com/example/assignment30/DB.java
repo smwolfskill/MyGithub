@@ -1,10 +1,9 @@
 package com.example.assignment30;
 
 import android.content.Context;
+import android.util.Log;
 import android.widget.TextView;
 
-import org.eclipse.egit.github.core.Repository;
-import org.eclipse.egit.github.core.client.GitHubClient;
 
 /**
  * DB --- 'DataBase': Class for holding current user information.
@@ -25,6 +24,28 @@ public class DB {
     public DB() {}
 
     /**
+     * Initialize the four page fragments. They will each have data loaded on them asynchronously.
+     * Should be called from MainActivity.
+     * @param mainActivity MainActivity
+     */
+    public void initFragments(MainActivity mainActivity) {
+        profileFragment = new ProfileFragment();
+        reposFragment = new ReposFragment();
+        reposFragment.pageTitle = "Public Repos";
+        followingFragment = new FollowFragment();
+        followersFragment = new FollowFragment();
+        followingFragment.setFields(mainActivity, "Following");
+        followersFragment.setFields(mainActivity, "Followers");
+        notificationsFragment = new NotificationsFragment();
+        notificationsFragment.setFields(mainActivity, this);
+        searchUsersFragment = new FollowFragment();
+        searchUsersFragment.setFields(mainActivity, "Search Users");
+        searchReposFragment = new ReposFragment();
+        searchReposFragment.pageTitle = "Search Repos";
+        Notification.setGetReason();
+    }
+
+    /**
      * Start async task that will interact over network with GitHub API
      * to start data extraction from GitHub API. Returns once task started.
      * @param param GithubParser param to call the async task with.
@@ -32,7 +53,7 @@ public class DB {
     public void startDataExtraction(GithubParser.Param param) {
         if(param.mode[0]) { //If acquiring profile, acquire it individually right away for faster return
             GithubParser.Param profileParam = new GithubParser.Param(param.db, param.targetName,
-                    new boolean[] {true, false, false, false, false, false});
+                    new boolean[] {true, false, false, false, false, false}, param.mainActivity);
             param.mode[0] = false;
             new GithubParser().execute(profileParam);
         }

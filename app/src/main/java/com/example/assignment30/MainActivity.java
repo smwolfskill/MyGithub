@@ -2,6 +2,9 @@ package com.example.assignment30;
 
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
+import android.os.Message;
+import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.FragmentTransaction;
 import android.support.design.widget.NavigationView;
@@ -27,10 +30,12 @@ import android.widget.RadioButton;
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
     public DB db;
+    public Handler handler;
+    public static final int HANDLER_POPUP = 1; //signal to MainActivity to show popup message
     private boolean shownFragments = false; //if true, have shown a fragment
-    private final String startUser = "smwolfskill"; //will default to this GitHub profile if loading login info fails
     private String oldUsersQuery = ""; //previous search query for users.
     private String oldReposQuery = ""; //previous search query for repos.
+    private final String loadLoginInfoFailed = "Loading user login info was unsuccessful. Showing default profile.";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,16 +53,20 @@ public class MainActivity extends AppCompatActivity
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
-        //2. Load GitHub user/token info if present
-        boolean loadLoginInfoSuccess = GithubParser.LoadLoginInfo();
+        //2. Make event handler, and load GitHub user/token info if present
+        handler = makeHandler();
+        boolean loadLoginInfoSuccess = GithubParser.LoadLoginInfo(this);
         //3. Init. DB and activities fragments
         db = new DB();
-        initFragments();
-        Notification.setGetReason();
+        db.initFragments(this);
 
         //4. Start loading & populating the DB asynchronously
+        String user = GithubParser.login_user_default;
+        if(GithubParser.login_user != null) { //use loaded username if possible, otherwise default user
+            user = GithubParser.login_user;
+        }
         boolean[] mode = new boolean[] {true, true, true, true, true, false}; //get all 4: profile, repos, following, followers
-        GithubParser.Param param = new GithubParser.Param(db, startUser, mode);
+        GithubParser.Param param = new GithubParser.Param(db, user, mode, this);
         db.startDataExtraction(param);
 
         //5. Show content with default page
@@ -65,22 +74,53 @@ public class MainActivity extends AppCompatActivity
 
         //6. If failed to load user login info, show popup after a delay.
         if(!loadLoginInfoSuccess) {
-            ShowLoadLoginInfoFailedPopup(1000);
+            ShowPopup(loadLoginInfoFailed, 1000);
         }
+    }
+
+    /**
+     * Construct a handler for this activity to receive messages on (to show popup messages).
+     * @return Handler constructed.
+     */
+    @NonNull
+    private Handler makeHandler() {
+        return new Handler(Looper.getMainLooper()) {
+            @Override
+            public void handleMessage(Message message) {
+                switch(message.what) {
+                    case HANDLER_POPUP: //show popup for each message in errorBundle
+                        Bundle errorBundle = message.getData();
+                        int count = 0;
+                        char[] errMsg;
+                        while(true) {
+                            errMsg = errorBundle.getCharArray(String.valueOf(count));
+                            if(errMsg != null) {
+                                Log.d("MainActivityHandler", String.valueOf(count) + ": '" + String.valueOf(errMsg) + "'");
+                                ShowPopup(String.valueOf(errMsg), message.arg1);
+                                count++;
+                            } else {
+                                break;
+                            }
+                        }
+                        break;
+                    default: Log.e("MainActivityHandler" ,message.what + " is invalid command code.");
+                }
+            }
+        };
     }
 
     /**
      * Show popup message notifying user that loading their GitHub login info has failed.
      * @param delayMillis Delay in milliseconds before showing the popup.
      */
-    private void ShowLoadLoginInfoFailedPopup(int delayMillis) {
+    public void ShowPopup(String message, int delayMillis) {
         final Handler handler = new Handler();
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {
                 Snackbar loadFailed = Snackbar.make(
-                        findViewById(R.id.drawer_layout),
-                        R.string.loadLoginInfoFailed,
+                        findViewById(android.R.id.content),
+                        message,
                         Snackbar.LENGTH_LONG);
                 loadFailed.show();
             }
@@ -150,7 +190,7 @@ public class MainActivity extends AppCompatActivity
                             //All false except following (here meaning users), and searchMode
                             db.searchUsersFragment.resetView();
                             GithubParser.Param param = new GithubParser.Param(db, query,
-                                    new boolean[] {false, false, true, false, false, true});
+                                    new boolean[] {false, false, true, false, false, true}, this);
                             db.startDataExtraction(param);
                         }
                         displaySelectedContent(R.id.rad_users);
@@ -161,7 +201,7 @@ public class MainActivity extends AppCompatActivity
                             //All false except repos, and searchMode
                             db.searchReposFragment.resetView();
                             GithubParser.Param param = new GithubParser.Param(db, query,
-                                    new boolean[]{false, true, false, false, false, true});
+                                    new boolean[]{false, true, false, false, false, true}, this);
                             db.startDataExtraction(param);
                         }
                         displaySelectedContent(R.id.rad_repos);
@@ -170,25 +210,6 @@ public class MainActivity extends AppCompatActivity
                 }
                 break;
         }
-    }
-
-    /**
-     * Initialize the four page fragments. They will each have data loaded on them asynchronously.
-     */
-    private void initFragments() {
-        db.profileFragment = new ProfileFragment();
-        db.reposFragment = new ReposFragment();
-        db.reposFragment.pageTitle = "Public Repos";
-        db.followingFragment = new FollowFragment();
-        db.followersFragment = new FollowFragment();
-        db.followingFragment.setFields(this, "Following");
-        db.followersFragment.setFields(this, "Followers");
-        db.notificationsFragment = new NotificationsFragment();
-        db.notificationsFragment.db = db;
-        db.searchUsersFragment = new FollowFragment();
-        db.searchUsersFragment.setFields(this, "Search Users");
-        db.searchReposFragment = new ReposFragment();
-        db.searchReposFragment.pageTitle = "Search Repos";
     }
 
     /**

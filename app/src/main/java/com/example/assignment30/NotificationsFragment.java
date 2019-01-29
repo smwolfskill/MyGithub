@@ -19,9 +19,15 @@ import android.widget.TextView;
  * @last_edit   11/07/2017
  */
 public class NotificationsFragment extends ActivityFragment implements View.OnClickListener {
+    public MainActivity parent = null;
     public DB db;
     private Notification[] notifications;
     private int[] notificationXmlIds = null; //ids of Notification xml obj's holding gui about a given notification.
+
+    public void setFields(MainActivity parent, DB db) {
+        this.parent = parent;
+        this.db = db;
+    }
 
     @Override
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
@@ -64,7 +70,7 @@ public class NotificationsFragment extends ActivityFragment implements View.OnCl
             Log.d("NotificationsFragment", "refresh clicked!");
             resetView();
             GithubParser.Param param = new GithubParser.Param(db, "",
-                    new boolean[] {false, false, false, false, true, false}); //only notifications
+                    new boolean[] {false, false, false, false, true, false}, parent); //only notifications
             db.startDataExtraction(param);
         }
     }
