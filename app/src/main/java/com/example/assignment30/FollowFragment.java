@@ -99,7 +99,7 @@ public class FollowFragment extends ActivityFragment implements View.OnClickList
                     //3. Start loading & populating the DB asynchronously
                     if(needNewData) {
                         GithubParser.Param param =
-                                new GithubParser.Param(parent.db, curProfile.user.getLogin(), mode);
+                                new GithubParser.Param(parent.db, curProfile.user.getLogin(), mode, parent);
                         parent.db.startDataExtraction(param);
                     }
                     break;
