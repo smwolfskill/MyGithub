@@ -16,7 +16,7 @@ import android.widget.TextView;
  *
  * @author      Scott Wolfskill, wolfski2
  * @created     10/23/2017
- * @last_edit   10/31/2017
+ * @last_edit   01/29/2019
  */
 public class ProfileFragment extends ActivityFragment {
     private Profile profile;
@@ -45,6 +45,18 @@ public class ProfileFragment extends ActivityFragment {
         view = null;
         profile = null;
         //loadNewContent = false;
+    }
+
+    /**
+     * Gets username for the loaded profile, if any.
+     * @return username ("login") of loaded profile, or null if no profile set.
+     */
+    public String GetProfileUsername() {
+        if(profile == null || profile.user == null) {
+            return null;
+        } else {
+            return profile.user.getLogin();
+        }
     }
 
     /**

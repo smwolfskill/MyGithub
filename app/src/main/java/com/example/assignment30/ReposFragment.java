@@ -22,7 +22,7 @@ import static android.view.View.GONE;
  *
  * @author      Scott Wolfskill, wolfski2
  * @created     10/23/2017
- * @last_edit   11/07/2017
+ * @last_edit   01/29/2019
  */
 public class ReposFragment extends ActivityFragment implements View.OnClickListener {
     public String pageTitle = null;
@@ -77,6 +77,18 @@ public class ReposFragment extends ActivityFragment implements View.OnClickListe
             LinearLayout llRepos = view.findViewById(R.id.ll_Repos);
             llRepos.setVisibility(View.GONE);
             llRepos.removeAllViews();
+        }
+    }
+
+    /**
+     * Gets the owner username ('login') of the first repository, if any.
+     * @return owner username, or null if no repos loaded.
+     */
+    public String GetReposOwner() {
+        if(repos == null || repos.length == 0) {
+            return null;
+        } else {
+            return repos[0].getOwner().getLogin();
         }
     }
 

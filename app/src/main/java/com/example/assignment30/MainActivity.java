@@ -61,14 +61,7 @@ public class MainActivity extends AppCompatActivity
         db.initFragments(this);
 
         //4. Start loading & populating the DB asynchronously
-        String user = GithubParser.login_user_default;
-        if(GithubParser.login_user != null) { //use loaded username if possible, otherwise default user
-            user = GithubParser.login_user;
-        }
-        boolean getNotifications = GithubParser.LoginTokenSet(); //only attempt to get notifications if login token is set
-        boolean[] mode = new boolean[] {true, true, true, true, getNotifications, false}; //get all 4: profile, repos, following, followers
-        GithubParser.Param param = new GithubParser.Param(db, user, mode, this);
-        db.startDataExtraction(param);
+        db.ExtractLoginProfile_full(true, this);
 
         //5. Show content with default page
         displaySelectedContent(R.id.nav_profile);   // set default content as Profile page
@@ -128,6 +121,8 @@ public class MainActivity extends AppCompatActivity
         }, delayMillis);
     }
 
+
+
     @Override
     public void onBackPressed() {
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -165,6 +160,20 @@ public class MainActivity extends AppCompatActivity
     public boolean onNavigationItemSelected(MenuItem item) {
         // Handle navigation view item clicks here.
         int id = item.getItemId();
+        switch(id) {
+            case R.id.nav_profile: //load user (or default) profile
+                db.ExtractLoginProfile_full(false, this);
+                break;
+            case R.id.nav_repos: //load user (or default) repositories
+                db.ExtractLoginRepos(this);
+                break;
+            case R.id.nav_following: //load user (or default) following
+                db.ExtractLoginFollowing(this);
+                break;
+            case R.id.nav_followers: //load user (or default) followers
+                db.ExtractLoginFollowers(this);
+                break;
+        }
         displaySelectedContent(id);
         return true;
     }

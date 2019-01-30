@@ -90,6 +90,17 @@ public class GithubParser extends AsyncTask<GithubParser.Param, Void, GithubPars
         }
     }
 
+    /**
+     * Return user-specified loaded username if possible, otherwise default user.
+     * @return login (or default) username.
+     */
+    public static String GetLoginUser() {
+        if(GithubParser.login_user != null) {
+            return GithubParser.login_user;
+        } else {
+            return GithubParser.login_user_default;
+        }
+    }
 
     /**
      * Attempt to load and set login info from login_filename.
