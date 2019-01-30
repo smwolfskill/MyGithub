@@ -33,6 +33,7 @@ public class FollowFragment extends ActivityFragment implements View.OnClickList
     @Override
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        Log.d("FollowFragment", String.valueOf(getActivity().findViewById(R.id.iv_navHeader_profilePic) == null));
         getActivity().setTitle(pageTitle);
         if(follow != null) {
             loadNewContent = true; //need to re-render the content
@@ -127,6 +128,7 @@ public class FollowFragment extends ActivityFragment implements View.OnClickList
      */
     public void loadContent(Profile[] newFollow) {
         Log.d("followFragment", "load new content");
+        resetView();
         follow = newFollow;
         loadNewContent = true;
         loadContent();

@@ -18,6 +18,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.RadioButton;
 
 /**
@@ -70,6 +71,12 @@ public class MainActivity extends AppCompatActivity
         if(!loadLoginInfoSuccess) {
             ShowPopup(loadLoginInfoFailed, 1000);
         }
+        //
+        ImageView tmp = (ImageView) findViewById(R.id.iv_navHeader_profilePic);
+        if(tmp == null) {
+            Log.e("SetNavProfile", "navHeader_profilePic was null!");
+        }
+        //
     }
 
     /**

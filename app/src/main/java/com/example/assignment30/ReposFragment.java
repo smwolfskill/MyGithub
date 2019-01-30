@@ -94,6 +94,7 @@ public class ReposFragment extends ActivityFragment implements View.OnClickListe
 
     public void loadContent(Repository[] newRepos) {
         Log.d("reposFragment", "load new content");
+        resetView();
         repos = newRepos;
         loadNewContent = true;
         loadContent();

@@ -20,6 +20,7 @@ import android.widget.TextView;
  */
 public class ProfileFragment extends ActivityFragment {
     private Profile profile;
+    private boolean navHeader_profileSet = false;
 
     @Override
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
@@ -42,7 +43,7 @@ public class ProfileFragment extends ActivityFragment {
 
     @Override
     public void resetView() {
-        view = null;
+        //view = null;
         profile = null;
         //loadNewContent = false;
     }
@@ -101,6 +102,22 @@ public class ProfileFragment extends ActivityFragment {
 
         //Set profile pic.
         ((ImageView) view.findViewById(R.id.iv_Profile_Pic)).setImageDrawable(profile.profilePic);
+
+        //If login user, set nav. header profile (if haven't already).
+        if(!navHeader_profileSet && profile.user.getLogin().equals(GithubParser.GetLoginUser())) {
+            SetNavHeaderProfile(profile);
+        }
+    }
+
+    /**
+     * Sets the profile information in the nav. header
+     * @param profile Loaded login (or default) user profile
+     */
+    private void SetNavHeaderProfile(Profile profile) {
+        ((ImageView) getActivity().findViewById(R.id.iv_navHeader_profilePic)).setImageDrawable(profile.profilePic);
+        ((TextView) getActivity().findViewById(R.id.tv_navHeader_profileName)).setText(profile.user.getName());
+        ((TextView) getActivity().findViewById(R.id.tv_navHeader_email)).setText(profile.user.getEmail());
+        navHeader_profileSet = true;
     }
 
 }

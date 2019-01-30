@@ -120,7 +120,7 @@ public class DB {
         String user = GithubParser.GetLoginUser();
         String loadedUser = profileFragment.GetProfileUsername();
         if(loadedUser == null || !loadedUser.equals(user)) { //don't query API if already loaded the data
-            profileFragment.resetView();
+            //profileFragment.resetView();
             // Only attempt to get notifications if specified and login token is set
             boolean notifications = getNotifications && GithubParser.LoginTokenSet();
             boolean[] mode = new boolean[]{true, true, true, true, notifications, false}; //get all 4: profile, repos, following, followers
@@ -133,7 +133,7 @@ public class DB {
         String user = GithubParser.GetLoginUser();
         String loadedReposOwner = reposFragment.GetReposOwner();
         if(loadedReposOwner == null || !loadedReposOwner.equals(user)) { //don't query API if already loaded the data
-            reposFragment.resetView();
+            //reposFragment.resetView();
             boolean[] mode = new boolean[]{false, true, false, false, false, false}; //get only repos
             GithubParser.Param param = new GithubParser.Param(this, user, mode, mainActivity);
             startDataExtraction(param);
@@ -142,7 +142,7 @@ public class DB {
 
     public void ExtractLoginFollowing(MainActivity mainActivity) {
         String user = GithubParser.GetLoginUser();
-        followingFragment.resetView();
+        //followingFragment.resetView();
         boolean[] mode = new boolean[]{false, false, true, false, false, false}; //get only following
         GithubParser.Param param = new GithubParser.Param(this, user, mode, mainActivity);
         startDataExtraction(param);
@@ -150,7 +150,7 @@ public class DB {
 
     public void ExtractLoginFollowers(MainActivity mainActivity) {
         String user = GithubParser.GetLoginUser();
-        followersFragment.resetView();
+        //followersFragment.resetView();
         boolean[] mode = new boolean[]{false, false, false, true, false, false}; //get only followers
         GithubParser.Param param = new GithubParser.Param(this, user, mode, mainActivity);
         startDataExtraction(param);
