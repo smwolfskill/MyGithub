@@ -11,3 +11,6 @@
 TODO
 /app/src/main/resources/login.txt
 /app/src/main/resources/login_dummy.txt
+
+# To stop tracking changes to login.txt:
+# git update-index --assume-unchanged app/src/main/resources/login.txt

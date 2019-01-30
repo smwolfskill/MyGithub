@@ -29,7 +29,7 @@ import org.eclipse.egit.github.core.service.UserService;
  *                  for obtaining GitHub info via their API and parsing it.
  * @author      Scott Wolfskill, wolfski2
  * @created     10/23/2017
- * @last_edit   01/26/2019
+ * @last_edit   01/29/2019
  */
 public class GithubParser extends AsyncTask<GithubParser.Param, Void, GithubParser.ReturnInfo> {
     public static final String login_user_default = "smwolfskill"; //default user if no other login info specified
@@ -200,7 +200,7 @@ public class GithubParser extends AsyncTask<GithubParser.Param, Void, GithubPars
         if (param[0].mode[4]) {
             try {
                 parsed.notifications = getNotifications();
-            }  catch (IOException e) {
+            }  catch (Exception e) {
                 if(!errMessages.contains(e.getMessage())) { //add to message if different
                     errMessages.push(e.getMessage());
                 }
@@ -389,12 +389,9 @@ public class GithubParser extends AsyncTask<GithubParser.Param, Void, GithubPars
      * Get all notifications for the login user. Requires authentication token.
      * @return Array of all notifications for the login user//, or null if not authenticated.
      */
-    public Notification[] getNotifications() throws IOException {
+    public Notification[] getNotifications() throws Exception {
         Log.d("getNotifications", "Starting Notifications extraction...");
         Notification[] notifications = null;
-        /*if(login_token == null) {
-            return null;
-        }*/
         GitHubClient client = new GitHubClient();
         client.setOAuth2Token(login_token);
         GitHubRequest request = new GitHubRequest();
@@ -406,15 +403,8 @@ public class GithubParser extends AsyncTask<GithubParser.Param, Void, GithubPars
         try {
             stream = client.getStream(request);
             //TEMP FOR TESTING: Instead of API req, load Notifications from file:
-            //stream = GithubParser.class.getResourceAsStream("/TempNotifications.txt");
+            //stream = GithubParser.class.getResourceAsStream("/Notifications_json.txt");
             InputStreamReader streamReader = new InputStreamReader(stream);
-
-            /*BufferedReader rd = new BufferedReader(streamReader);
-            String line;
-            while ((line = rd.readLine()) != null) {
-                Log.d("getNotifications", "     " + line);
-            }
-            rd.close();*/
 
             notifications = GsonUtils.fromJson(streamReader, Notification[].class);
             Log.d("getNotifications", "parsed " + notifications.length + " notifications.");
@@ -423,8 +413,8 @@ public class GithubParser extends AsyncTask<GithubParser.Param, Void, GithubPars
                 Log.d("getNotifications", notifications[i].toString());
             }
 
-        } catch (/*Exception*/IOException e) {
-            Log.e("getNotifications", "API FAILED w/ IOException msg. '" + e.getMessage() + "'");
+        } catch (Exception e) {
+            Log.e("getNotifications", "API FAILED w/ Exception msg. '" + e.getMessage() + "'");
             throw e;
         }
 

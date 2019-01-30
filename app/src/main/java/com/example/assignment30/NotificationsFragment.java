@@ -16,7 +16,7 @@ import android.widget.TextView;
  *
  * @author      Scott Wolfskill, wolfski2
  * @created     11/06/2017
- * @last_edit   11/07/2017
+ * @last_edit   01/29/2019
  */
 public class NotificationsFragment extends ActivityFragment implements View.OnClickListener {
     public MainActivity parent = null;
@@ -33,6 +33,7 @@ public class NotificationsFragment extends ActivityFragment implements View.OnCl
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         getActivity().setTitle("Notifications");
+        resetView();
         if (notifications != null) {
             loadNewContent = true; //need to re-render the content
         }
@@ -68,6 +69,10 @@ public class NotificationsFragment extends ActivityFragment implements View.OnCl
         }
         if (v.getId() == R.id.btn_Notifications_Update) { //update/refresh Notifications page
             Log.d("NotificationsFragment", "refresh clicked!");
+            //Note: Can't change anything in resources file after runtime; below is useless
+            //GithubParser.LoadLoginInfo(parent); //update if any change to login info file
+            notifications = null;
+            notificationXmlIds = null;
             resetView();
             GithubParser.Param param = new GithubParser.Param(db, "",
                     new boolean[] {false, false, false, false, true, false}, parent); //only notifications
@@ -77,14 +82,21 @@ public class NotificationsFragment extends ActivityFragment implements View.OnCl
 
     @Override
     public void resetView() {
-        notifications = null;
-        notificationXmlIds = null;
-        if(view != null) { //show "Loading..." tv and delete LinearLayout elements
+        if(view != null) { //delete LinearLayout elements
             TextView loading = view.findViewById(R.id.tv_Notifications_loading);
-            loading.setVisibility(View.VISIBLE);
+            TextView unauthenticated = view.findViewById(R.id.tv_Notifications_unauthenticated);
             LinearLayout llNotifications = view.findViewById(R.id.ll_Notifications);
             llNotifications.setVisibility(View.GONE);
             llNotifications.removeAllViews();
+            if(GithubParser.LoginTokenSet()) { //possibly able to fetch notifications
+                //show "Loading..." tv
+                loading.setVisibility(View.VISIBLE);
+                unauthenticated.setVisibility(View.GONE);
+            } else { //can't fetch notifications w/o authentication
+                //show unauthenticated tv
+                loading.setVisibility(View.GONE);
+                unauthenticated.setVisibility(View.VISIBLE);
+            }
         }
     }
 
@@ -106,12 +118,15 @@ public class NotificationsFragment extends ActivityFragment implements View.OnCl
     protected void _loadContent() {
         Log.d("NotificationsFragment", "_loadContent");
         if(notifications == null) {
+            //TODO: See if login token is null and display message?
             return;
         }
         TextView loading = view.findViewById(R.id.tv_Notifications_loading);
+        TextView unauthenticated = view.findViewById(R.id.tv_Notifications_unauthenticated);
         LinearLayout llNotifications = view.findViewById(R.id.ll_Notifications);
         Context context = getContext();
         loading.setVisibility(View.GONE);
+        unauthenticated.setVisibility(View.GONE);
 
         if(notifications.length == 0) {
             //user has no notifications

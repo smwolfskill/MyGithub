@@ -10,7 +10,7 @@ import android.widget.TextView;
  *
  * @author      Scott Wolfskill, wolfski2
  * @created     10/23/2017
- * @last_edit   11/06/2017
+ * @last_edit   01/29/2019
  */
 public class DB {
     public ProfileFragment profileFragment;
@@ -59,6 +59,9 @@ public class DB {
         }
         //Acquire all other fields if specified.
         if(param.mode[1] || param.mode[2] || param.mode[3] || param.mode[4]) {
+            if(param.mode[4]) {
+                notificationsFragment.resetView();
+            }
             new GithubParser().execute(param);
         }
     }
