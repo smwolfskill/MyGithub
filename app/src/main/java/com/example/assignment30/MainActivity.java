@@ -65,7 +65,8 @@ public class MainActivity extends AppCompatActivity
         if(GithubParser.login_user != null) { //use loaded username if possible, otherwise default user
             user = GithubParser.login_user;
         }
-        boolean[] mode = new boolean[] {true, true, true, true, true, false}; //get all 4: profile, repos, following, followers
+        boolean getNotifications = GithubParser.LoginTokenSet(); //only attempt to get notifications if login token is set
+        boolean[] mode = new boolean[] {true, true, true, true, getNotifications, false}; //get all 4: profile, repos, following, followers
         GithubParser.Param param = new GithubParser.Param(db, user, mode, this);
         db.startDataExtraction(param);
 

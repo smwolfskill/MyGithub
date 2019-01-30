@@ -133,6 +133,14 @@ public class GithubParser extends AsyncTask<GithubParser.Param, Void, GithubPars
     }
 
     /**
+     * Return true if login_token is set.
+     * @return true if login_token is not null, false if login_token is null.
+     */
+    public static boolean LoginTokenSet() {
+        return (login_token != null);
+    }
+
+    /**
      * Parse required GitHub fields for user with login_token and update the DB with them.
      * @param param String array {"target name", mode} where mode is in format:
      *                      includes GET_PROFILE : get Profile of "target name"
@@ -379,12 +387,14 @@ public class GithubParser extends AsyncTask<GithubParser.Param, Void, GithubPars
 
     /**
      * Get all notifications for the login user. Requires authentication token.
-     * @return Array of all notifications for the login user.
+     * @return Array of all notifications for the login user//, or null if not authenticated.
      */
     public Notification[] getNotifications() throws IOException {
         Log.d("getNotifications", "Starting Notifications extraction...");
         Notification[] notifications = null;
-
+        /*if(login_token == null) {
+            return null;
+        }*/
         GitHubClient client = new GitHubClient();
         client.setOAuth2Token(login_token);
         GitHubRequest request = new GitHubRequest();
@@ -422,7 +432,7 @@ public class GithubParser extends AsyncTask<GithubParser.Param, Void, GithubPars
     }
 
     /**
-     * Get searched users as Profiles. Requires authentication token.
+     * Get searched users as Profiles.
      * @param usernameCloseTo Username/login to search for.
      * @return Any close/matching Profiles found.
      */
@@ -431,7 +441,9 @@ public class GithubParser extends AsyncTask<GithubParser.Param, Void, GithubPars
         Profile[] profiles = null;
 
         GitHubClient client = new GitHubClient();
-        client.setOAuth2Token(login_token);
+        if(login_token != null) {
+            client.setOAuth2Token(login_token); //better rate limit for authenticated requests
+        }
         GitHubRequest request = new GitHubRequest();
         request.setUri("/search/users");
         HashMap<String, String> params = new HashMap<>(1);
@@ -441,14 +453,6 @@ public class GithubParser extends AsyncTask<GithubParser.Param, Void, GithubPars
         try {
             stream = client.getStream(request);
             InputStreamReader streamReader = new InputStreamReader(stream);
-
-            /*BufferedReader rd = new BufferedReader(streamReader);
-            String line;
-            while ((line = rd.readLine()) != null) {
-                Log.d("getUsers_search", "     " + line);
-            }
-            rd.close();*/
-
             SearchResult_Users searched = GsonUtils.fromJson(streamReader, SearchResult_Users.class);
             /* Convert users into skeleton Profiles.
              * (missing repos, following, followers which will optionally be loaded later) */
@@ -468,16 +472,18 @@ public class GithubParser extends AsyncTask<GithubParser.Param, Void, GithubPars
     }
 
     /**
-     * Get searched repositories. Requires authentication token.
+     * Get searched repositories.
      * @param nameCloseTo Repository name to search for.
      * @return Any close/matching repos found.
      */
     public Repository[] getRepos_search(String nameCloseTo) throws IOException {
-        Log.d("getUsers_search", "Starting search users extraction...");
+        Log.d("getUsers_repos", "Starting search repos extraction...");
         Repository[] repos = null;
 
         GitHubClient client = new GitHubClient();
-        client.setOAuth2Token(login_token);
+        if(login_token != null) {
+            client.setOAuth2Token(login_token); //better rate limit for authenticated requests
+        }
         GitHubRequest request = new GitHubRequest();
         request.setUri("/search/repositories");
         HashMap<String, String> params = new HashMap<>(1);
@@ -487,14 +493,6 @@ public class GithubParser extends AsyncTask<GithubParser.Param, Void, GithubPars
         try {
             stream = client.getStream(request);
             InputStreamReader streamReader = new InputStreamReader(stream);
-
-            /*BufferedReader rd = new BufferedReader(streamReader);
-            String line;
-            while ((line = rd.readLine()) != null) {
-                Log.d("getUsers_search", "     " + line);
-            }
-            rd.close();*/
-
             SearchResult_Repos searched = GsonUtils.fromJson(streamReader, SearchResult_Repos.class);
             /* Convert users into skeleton Profiles.
              * (missing repos, following, followers which will optionally be loaded later) */

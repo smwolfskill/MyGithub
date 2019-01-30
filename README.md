@@ -19,5 +19,5 @@ It is encouraged to use an access token, as the API request limit per hour is mu
 
 If [`login.txt`](app/src/main/resources/login.txt) is invalid, unchanged or deleted,
 the app will load the default profile (smwolfskill) and display a popup message on startup. 
-All GitHub navigation functionality will still be present, albeit with a smaller allowance of API requests per hour.
+All GitHub navigation and search functionality will still be present, albeit with a smaller allowance of API requests per hour.
 Some actions, such as viewing user notifications, are not possible without authentication.
