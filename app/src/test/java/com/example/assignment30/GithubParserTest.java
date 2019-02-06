@@ -14,17 +14,18 @@ public class GithubParserTest {
 
     @BeforeClass
     public static void initOnce() {
-        boolean[] mode1 = new boolean[] {true, false, false, false, false, false};
-        boolean[] mode1_equiv = new boolean[] {true, false, false, false, false, false};
-        boolean[] mode1_supp = new boolean[] {false, true, true, false, false, false};
+        boolean[] mode1 = new boolean[] {false, true, false, false, false, false};
+        boolean[] mode1_equiv = new boolean[] {false, true, false, false, false, false};
+        boolean[] mode1_supp = new boolean[] {false, false, true, true, false, false};
+        boolean[] mode2_search = new boolean[] {false, true, false, false, false, true};
         param1 = new GithubParser.Param(null, "target1", mode1,
                 0, 0, null);
         param1_equiv = new GithubParser.Param(null, "target1", mode1_equiv,
                 0, 0, null);
         param1_supp = new GithubParser.Param(null, "target1", mode1_supp,
                 0, 0, null);
-        param2 = new GithubParser.Param(null, "target2", mode1,
-                0, 0, null);
+        param2 = new GithubParser.Param(null, "target1", mode2_search,
+                0, 0, null); //global search for repos matching "target1"
         githubParser = new GithubParser(param1);
     }
 

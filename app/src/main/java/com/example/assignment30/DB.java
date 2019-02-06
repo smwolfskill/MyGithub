@@ -66,13 +66,11 @@ public class DB {
                 if (param.mode[i]) {
                     GithubParser.Param separateParam = new GithubParser.Param(param);
                     separateParam.setMode_IndexOnly(i); //mode[5] (search mode true/false) unchanged
-                    //new GithubParser().execute(separateParam);
                     githubParserQueue.addToQueue(separateParam);
                 }
             }
         } else {
             //Fetch all data in one GithubParser request
-            //new GithubParser().execute(param);
             githubParserQueue.addToQueue(param);
         }
     }
