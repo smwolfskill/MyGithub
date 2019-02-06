@@ -23,9 +23,12 @@ public class DB {
     public int profileImage_width;
     public int profileImage_height;
 
+    private GithubParserQueue githubParserQueue;
+
     public DB(int profileImage_width, int profileImage_height) {
         this.profileImage_width = profileImage_width;
         this.profileImage_height = profileImage_height;
+        this.githubParserQueue = new GithubParserQueue();
     }
 
     /**
@@ -54,41 +57,28 @@ public class DB {
      * Start async task that will interact over network with GitHub API
      * to start data extraction from GitHub API. Returns once task started.
      * @param param GithubParser param to call the async task with.
-     * @param extractSeparately If true, will extract all data in separate requests (one request for each type of data requested).
+     * @param extractSeparately If true, will extract all data in separate requests (one request for each type of data requested in param.mode).
      */
     public void startDataExtraction(GithubParser.Param param, boolean extractSeparately) {
-        /*if(param.mode[0]) { //If acquiring profile, acquire it individually right away for faster return
-            GithubParser.Param profileParam = new GithubParser.Param(param.db, param.targetName,
-                    new boolean[] {true, false, false, false, false, false},
-                    profileImage_width, profileImage_height, param.mainActivity);
-            param.mode[0] = false;
-            GithubParser.Param profileParam = new GithubParser.Param(param);
-            profileParam.setMode_ProfileOnly();
-            new GithubParser().execute(profileParam);
-        }
-        //Acquire all other fields if specified.
-        if(param.mode[1] || param.mode[2] || param.mode[3] || param.mode[4]) {
-            if(param.mode[4]) {
-                notificationsFragment.resetView();
-            }
-            new GithubParser().execute(param);
-        }*/
         if(extractSeparately) {
-            //Create a separate GitHubParser for each type of data requested in param.mode
+            //Create a separate GitHubParser for each type of data requested in param.mode for faster returns
             for (int i = 0; i <= 4; i++) {
                 if (param.mode[i]) {
                     GithubParser.Param separateParam = new GithubParser.Param(param);
                     separateParam.setMode_IndexOnly(i); //mode[5] (search mode true/false) unchanged
-                    new GithubParser().execute(separateParam);
+                    //new GithubParser().execute(separateParam);
+                    githubParserQueue.addToQueue(separateParam);
                 }
             }
         } else {
             //Fetch all data in one GithubParser request
-            new GithubParser().execute(param);
+            //new GithubParser().execute(param);
+            githubParserQueue.addToQueue(param);
         }
     }
 
     public void newDataLoaded(GithubParser.ReturnInfo parsed) {
+        githubParserQueue.githubParserFinished(parsed.originalParam); //remove finished GithubParser from queue
         if (parsed.repos != null) {
             if(!parsed.searchMode) { //acquired user's repos
                 reposFragment.loadContent(parsed.repos);

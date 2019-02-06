@@ -38,6 +38,7 @@ public class GithubParser extends AsyncTask<GithubParser.Param, Void, GithubPars
     private static String login_user_dummy = "GitHub username";
     private static String login_token_dummy = "personal access token";
 
+    private Param param;
     private int profileImage_width;  //Minimum width to compress targetName's profile picture to.
     private int profileImage_height; //Minimum height to compress targetName's profile picture to.
 
@@ -92,6 +93,18 @@ public class GithubParser extends AsyncTask<GithubParser.Param, Void, GithubPars
             this.mainActivity = copy.mainActivity;
         }
 
+        /**
+         * Determine if this Param is set to search mode or not.
+         * @return True if mode[5] is true; false otherwise or if mode is null.
+         */
+        public boolean searchMode() {
+            if(mode == null) {
+                return false;
+            } else {
+                return mode[5];
+            }
+        }
+
         public void setMode_ProfileOnly() {
             setMode_IndexOnly(0);
             mode[5] = false;
@@ -144,6 +157,45 @@ public class GithubParser extends AsyncTask<GithubParser.Param, Void, GithubPars
             }
         }
 
+        public boolean isEquivalentTo(Param other) {
+            if(db != other.db
+                    || profileImage_width != other.profileImage_width
+                    || profileImage_height != other.profileImage_height
+                    || !this.targetName.equals(other.targetName)
+                    || mainActivity != other.mainActivity) {
+                return false;
+            }
+            if(this.mode == other.mode) { //same reference
+                return true;
+            }
+            //Different reference, so compare mode arrays by value:
+            if(this.mode.length != other.mode.length) {
+                return false;
+            }
+            for(int i = 0; i < this.mode.length; i++) {
+                if(this.mode[i] != other.mode[i]) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        /**
+         * Compare two Params and determine if they are supplementary.
+         * @param other Param to compare to.
+         * @return True if all members are equal except possibly not mode or profileImage_width and height,
+         *         as long as both are in the same search mode (both true or both false).
+         */
+        public boolean isSupplementaryTo(Param other) {
+            if(db != other.db
+                    || !this.targetName.equals(other.targetName)
+                    || mainActivity != other.mainActivity
+                    || searchMode() != other.searchMode()) {
+                return false;
+            }
+            return true;
+        }
+
         private void initMode() {
             if(mode == null) {
                 mode = new boolean[6];
@@ -155,6 +207,7 @@ public class GithubParser extends AsyncTask<GithubParser.Param, Void, GithubPars
      * ReturnInfo --- Inner class containing information parsed from GitHub.
      */
     public static class ReturnInfo {
+        public Param originalParam; //original Param that was passed to this fulfilled request.
         public DB db;
         public Profile profile;
         public Repository[] repos;
@@ -162,7 +215,8 @@ public class GithubParser extends AsyncTask<GithubParser.Param, Void, GithubPars
         public Profile[] followers;
         public Notification[] notifications;
         public boolean searchMode; //if true, put searched repos in repos and searched users in following.
-        public ReturnInfo(DB db, boolean searchMode) {
+        public ReturnInfo(Param originalParam, DB db, boolean searchMode) {
+            this.originalParam = originalParam;
             this.db = db;
             profile = null;
             repos = null;
@@ -234,6 +288,10 @@ public class GithubParser extends AsyncTask<GithubParser.Param, Void, GithubPars
         return (login_token != null);
     }
 
+    public GithubParser(Param param) {
+        this.param = param;
+    }
+
     /**
      * Parse required GitHub fields for user with login_token and update the DB with them.
      * @param param String array {"target name", mode} where mode is in format:
@@ -247,18 +305,19 @@ public class GithubParser extends AsyncTask<GithubParser.Param, Void, GithubPars
             throw new IllegalArgumentException("GithubParser: expected len. 1 Param array! " +
                     "(was " + param.length + ")");
         }
+        this.param = param[0];
         this.profileImage_width = param[0].profileImage_width;
         this.profileImage_height = param[0].profileImage_height;
         LinkedList<String> errMessages = new LinkedList<String>(); //list of unique exception messages
-        ReturnInfo parsed = new ReturnInfo(param[0].db, param[0].mode[5]);
-        if (param[0].mode[0]) { //need to acquire profile w/ username 'targetName'
+        ReturnInfo parsed = new ReturnInfo(this.param, param[0].db, param[0].mode[5]);
+        if (param[0].mode[0] && !isCancelled()) { //need to acquire profile w/ username 'targetName'
             try {
                 parsed.profile = getProfile(param[0].targetName);
             } catch (Exception e) {
                 errMessages.push(e.getMessage());
             }
         }
-        if (param[0].mode[1]) {
+        if (param[0].mode[1] && !isCancelled()) {
             try {
                 if (!param[0].mode[5]) { //get repos of user at targetName
                     parsed.repos = getRepos(param[0].targetName);
@@ -271,7 +330,7 @@ public class GithubParser extends AsyncTask<GithubParser.Param, Void, GithubPars
                 }
             }
         }
-        if (param[0].mode[2]) {
+        if (param[0].mode[2] && !isCancelled()) {
             try {
                 if (!param[0].mode[5]) { // get following of user at targetName
                     parsed.following = getFollowing(param[0].targetName);
@@ -284,7 +343,7 @@ public class GithubParser extends AsyncTask<GithubParser.Param, Void, GithubPars
                 }
             }
         }
-        if (param[0].mode[3]) {
+        if (param[0].mode[3] && !isCancelled()) {
             try {
                 parsed.followers = getFollowers(param[0].targetName);
             }  catch (Exception e) {
@@ -293,7 +352,7 @@ public class GithubParser extends AsyncTask<GithubParser.Param, Void, GithubPars
                 }
             }
         }
-        if (param[0].mode[4]) {
+        if (param[0].mode[4] && !isCancelled()) {
             try {
                 parsed.notifications = getNotifications();
             }  catch (Exception e) {
@@ -303,7 +362,9 @@ public class GithubParser extends AsyncTask<GithubParser.Param, Void, GithubPars
             }
         }
         //Show error message if exception encountered, and return parsed info
-        sendErrorMessages(errMessages, param[0].mainActivity);
+        if(!isCancelled()) {
+            sendErrorMessages(errMessages, param[0].mainActivity);
+        }
         return parsed;
     }
 
@@ -338,11 +399,29 @@ public class GithubParser extends AsyncTask<GithubParser.Param, Void, GithubPars
     }
 
     /**
+     * Determine if this GithubParser is an equivalent request to other.
+     * @param other Param to compare to.
+     * @return True if this param is equivalent to other.
+     */
+    public boolean isEquivalentTo(Param other) {
+        return param.isEquivalentTo(other);
+    }
+
+    /**
+     * Determine if this GithubParser is a supplementary request to other.
+     * @param other Param to compare to.
+     * @return True if this param is supplementary to other.
+     */
+    public boolean isSupplementaryTo(Param other) {
+        return param.isSupplementaryTo(other);
+    }
+
+    /**
      * Get and parse Profile information for the user, and return the info as a new Profile.
      * @param targetName GitHub username of target to obtain Profile of. If null, does login_user
      * @return Profile of user with targetName or login_token.
     */
-    public Profile getProfile(String targetName) throws Exception {
+    protected Profile getProfile(String targetName) throws Exception {
         Log.d("getProfile", "Starting Profile extraction for " + targetName + "...");
         Profile profile = null;
 
@@ -353,13 +432,22 @@ public class GithubParser extends AsyncTask<GithubParser.Param, Void, GithubPars
                 GitHubClient client = new GitHubClient();
                 client.setOAuth2Token(login_token);
                 service = new UserService(client);
+                if(isCancelled()) { //check if isCancelled before sending API request
+                    return profile;
+                }
                 usr = service.getUser(); //authenticated request
             } else {
                 service = new UserService();
+                if(isCancelled()) { //check if isCancelled before sending API request
+                    return profile;
+                }
                 usr = service.getUser(targetName); //unauthenticated request
             }
 
             //Get profile pic:
+            if(isCancelled()) { //check if isCancelled before obtaining profile pic
+                return profile;
+            }
             Drawable profilePic = ImageParser.getProfileImage(usr, profileImage_width, profileImage_height);
 
             //Create profile.
@@ -380,7 +468,7 @@ public class GithubParser extends AsyncTask<GithubParser.Param, Void, GithubPars
      * @param targetName GitHub username of target to obtain Repos of. If null, does login_token user.
      * @return Repositories Array of targetName or login_token.
      */
-    public Repository[] getRepos(String targetName) throws IOException {
+    protected Repository[] getRepos(String targetName) throws IOException {
         Log.d("getRepos", "Starting repos extraction for " + targetName + "...");
         Repository[] repos = null;
 
@@ -393,7 +481,13 @@ public class GithubParser extends AsyncTask<GithubParser.Param, Void, GithubPars
             } else {
                 service = new RepositoryService();
             }
+            if(isCancelled()) { //check if isCancelled before sending API request
+                return repos;
+            }
             List<Repository> reposList = service.getRepositories(targetName);
+            if(isCancelled()) { //check if isCancelled doing potentially long conversion to array
+                return repos;
+            }
             repos = reposList.toArray(new Repository[reposList.size()]);
             Log.d("getRepos", "Parsed " + repos.length + " Repositories.");
             /*for(int i = 0; i < repos.length; i++) {
@@ -417,7 +511,7 @@ public class GithubParser extends AsyncTask<GithubParser.Param, Void, GithubPars
      * Get and parse list of users (profile) is following.
      * @param targetName GitHub username of target to obtain Following of.
      */
-    public Profile[] getFollowing(String targetName) throws Exception {
+    protected Profile[] getFollowing(String targetName) throws Exception {
         Log.d("getFollow", "Starting following extraction on target '" + targetName + "'...");
         return getFollow(targetName, true);
     }
@@ -426,7 +520,7 @@ public class GithubParser extends AsyncTask<GithubParser.Param, Void, GithubPars
      * Get and parse list of users who follow (profile).
      * @param targetName GitHub username of target to obtain Followers of.
      */
-    public Profile[] getFollowers(String targetName) throws Exception {
+    protected Profile[] getFollowers(String targetName) throws Exception {
         Log.d("getFollow", "Starting followers extraction on target '" + targetName + "'...");
         return getFollow(targetName, false);
     }
@@ -456,18 +550,25 @@ public class GithubParser extends AsyncTask<GithubParser.Param, Void, GithubPars
                 service = new UserService();
             }
             List<User> follow_usersList = null;
+            if(isCancelled()) { //check if isCancelled before sending API request
+                return follows;
+            }
             if(following) {
                 follow_usersList = service.getFollowing(targetName);
             } else {
                 follow_usersList = service.getFollowers(targetName);
             }
-            User[] follow_users = follow_usersList.toArray(new User[follow_usersList.size()]);
             /* Convert users into skeleton Profiles.
              * (missing repos, following, followers which will optionally be loaded later) */
-            follows = new Profile[follow_users.length];
-            for(int i = 0; i < follow_users.length; i++) {
-                Drawable profileImage = ImageParser.getProfileImage(follow_users[i], profileImage_width, profileImage_height);
-                follows[i] = new Profile(follow_users[i], profileImage);
+            follows = new Profile[follow_usersList.size()];
+            int i = 0;
+            for(User follow_user : follow_usersList) {
+                if(isCancelled()) { //periodically check if isCancelled during (possibly) long loop
+                    return follows;
+                }
+                Drawable profileImage = ImageParser.getProfileImage(follow_user, profileImage_width, profileImage_height);
+                follows[i] = new Profile(follow_user, profileImage);
+                i++;
                 //Log.d("getFollow", follow + " parsed Profile #" + i + ":");
                 //follows[i].logData("getFollow");
             }
@@ -485,7 +586,7 @@ public class GithubParser extends AsyncTask<GithubParser.Param, Void, GithubPars
      * Get all notifications for the login user. Requires authentication token.
      * @return Array of all notifications for the login user//, or null if not authenticated.
      */
-    public Notification[] getNotifications() throws Exception {
+    protected Notification[] getNotifications() throws Exception {
         Log.d("getNotifications", "Starting Notifications extraction...");
         Notification[] notifications = null;
         GitHubClient client = new GitHubClient();
@@ -497,6 +598,9 @@ public class GithubParser extends AsyncTask<GithubParser.Param, Void, GithubPars
         request.setParams(params);
         InputStream stream = null;
         try {
+            if(isCancelled()) { //check if isCancelled before sending API request
+                return notifications;
+            }
             stream = client.getStream(request);
             //TEMP FOR TESTING: Instead of API req, load Notifications from file:
             //stream = GithubParser.class.getResourceAsStream("/Notifications_json.txt");
@@ -504,10 +608,10 @@ public class GithubParser extends AsyncTask<GithubParser.Param, Void, GithubPars
 
             notifications = GsonUtils.fromJson(streamReader, Notification[].class);
             Log.d("getNotifications", "parsed " + notifications.length + " notifications.");
-            for(int i = 0; i < notifications.length; i++) {
+            /*for(int i = 0; i < notifications.length; i++) {
                 Log.d("getNotifications", "Notification #" + i);
                 Log.d("getNotifications", notifications[i].toString());
-            }
+            }*/
 
         } catch (Exception e) {
             Log.e("getNotifications", "API FAILED w/ Exception msg. '" + e.getMessage() + "'");
@@ -522,7 +626,7 @@ public class GithubParser extends AsyncTask<GithubParser.Param, Void, GithubPars
      * @param usernameCloseTo Username/login to search for.
      * @return Any close/matching Profiles found.
      */
-    public Profile[] getUsers_search(String usernameCloseTo) throws Exception {
+    protected Profile[] getUsers_search(String usernameCloseTo) throws Exception {
         Log.d("getUsers_search", "Starting search users extraction...");
         Profile[] profiles = null;
 
@@ -537,6 +641,9 @@ public class GithubParser extends AsyncTask<GithubParser.Param, Void, GithubPars
         request.setParams(params);
         InputStream stream = null;
         try {
+            if(isCancelled()) { //check if isCancelled before sending API request
+                return profiles;
+            }
             stream = client.getStream(request);
             InputStreamReader streamReader = new InputStreamReader(stream);
             SearchResult_Users searched = GsonUtils.fromJson(streamReader, SearchResult_Users.class);
@@ -544,6 +651,9 @@ public class GithubParser extends AsyncTask<GithubParser.Param, Void, GithubPars
              * (missing repos, following, followers which will optionally be loaded later) */
             profiles = new Profile[searched.items.length];
             for(int i = 0; i < searched.items.length; i++) {
+                if(isCancelled()) { //periodically check if isCancelled during potentially long loop
+                    return profiles;
+                }
                 Drawable profileImage = ImageParser.getProfileImage(searched.items[i], profileImage_width, profileImage_height);
                 profiles[i] = new Profile(searched.items[i], profileImage);
                 //Log.d("getUsers_search", " parsed Profile #" + i + ":");
@@ -563,7 +673,7 @@ public class GithubParser extends AsyncTask<GithubParser.Param, Void, GithubPars
      * @param nameCloseTo Repository name to search for.
      * @return Any close/matching repos found.
      */
-    public Repository[] getRepos_search(String nameCloseTo) throws IOException {
+    protected Repository[] getRepos_search(String nameCloseTo) throws IOException {
         Log.d("getUsers_repos", "Starting search repos extraction...");
         Repository[] repos = null;
 
@@ -578,6 +688,9 @@ public class GithubParser extends AsyncTask<GithubParser.Param, Void, GithubPars
         request.setParams(params);
         InputStream stream = null;
         try {
+            if(isCancelled()) { //check if isCancelled before sending API request
+                return repos;
+            }
             stream = client.getStream(request);
             InputStreamReader streamReader = new InputStreamReader(stream);
             SearchResult_Repos searched = GsonUtils.fromJson(streamReader, SearchResult_Repos.class);
