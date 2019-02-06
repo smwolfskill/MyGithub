@@ -74,8 +74,8 @@
 
                 <ImageView
                     android:id="@+id/iv_Profile_Pic"
-                    android:layout_width="110dp"
-                    android:layout_height="110dp"
+                    android:layout_width="@dimen/profilePic_width"
+                    android:layout_height="@dimen/profilePic_height"
                     android:layout_alignParentLeft="true"
                     android:layout_alignParentStart="true"
                     android:layout_alignParentTop="true"

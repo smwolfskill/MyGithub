@@ -1,7 +1,6 @@
 package com.example.assignment30;
 
 import android.content.Context;
-import android.util.Log;
 import android.widget.TextView;
 
 
@@ -10,7 +9,7 @@ import android.widget.TextView;
  *
  * @author      Scott Wolfskill, wolfski2
  * @created     10/23/2017
- * @last_edit   01/29/2019
+ * @last_edit   02/05/2019
  */
 public class DB {
     public ProfileFragment profileFragment;
@@ -21,7 +20,13 @@ public class DB {
     public FollowFragment searchUsersFragment;
     public ReposFragment searchReposFragment;
 
-    public DB() {}
+    public int profileImage_width;
+    public int profileImage_height;
+
+    public DB(int profileImage_width, int profileImage_height) {
+        this.profileImage_width = profileImage_width;
+        this.profileImage_height = profileImage_height;
+    }
 
     /**
      * Initialize the four page fragments. They will each have data loaded on them asynchronously.
@@ -53,7 +58,8 @@ public class DB {
     public void startDataExtraction(GithubParser.Param param) {
         if(param.mode[0]) { //If acquiring profile, acquire it individually right away for faster return
             GithubParser.Param profileParam = new GithubParser.Param(param.db, param.targetName,
-                    new boolean[] {true, false, false, false, false, false}, param.mainActivity);
+                    new boolean[] {true, false, false, false, false, false},
+                    profileImage_width, profileImage_height, param.mainActivity);
             param.mode[0] = false;
             new GithubParser().execute(profileParam);
         }
@@ -124,7 +130,7 @@ public class DB {
             // Only attempt to get notifications if specified and login token is set
             boolean notifications = getNotifications && GithubParser.LoginTokenSet();
             boolean[] mode = new boolean[]{true, true, true, true, notifications, false}; //get all 4: profile, repos, following, followers
-            GithubParser.Param param = new GithubParser.Param(this, user, mode, mainActivity);
+            GithubParser.Param param = new GithubParser.Param(this, user, mode, profileImage_width, profileImage_height, mainActivity);
             startDataExtraction(param);
         }
     }
@@ -135,7 +141,7 @@ public class DB {
         if(loadedReposOwner == null || !loadedReposOwner.equals(user)) { //don't query API if already loaded the data
             //reposFragment.resetView();
             boolean[] mode = new boolean[]{false, true, false, false, false, false}; //get only repos
-            GithubParser.Param param = new GithubParser.Param(this, user, mode, mainActivity);
+            GithubParser.Param param = new GithubParser.Param(this, user, mode, profileImage_width, profileImage_height, mainActivity);
             startDataExtraction(param);
         }
     }
@@ -144,7 +150,7 @@ public class DB {
         String user = GithubParser.GetLoginUser();
         //followingFragment.resetView();
         boolean[] mode = new boolean[]{false, false, true, false, false, false}; //get only following
-        GithubParser.Param param = new GithubParser.Param(this, user, mode, mainActivity);
+        GithubParser.Param param = new GithubParser.Param(this, user, mode, profileImage_width, profileImage_height, mainActivity);
         startDataExtraction(param);
     }
 
@@ -152,7 +158,7 @@ public class DB {
         String user = GithubParser.GetLoginUser();
         //followersFragment.resetView();
         boolean[] mode = new boolean[]{false, false, false, true, false, false}; //get only followers
-        GithubParser.Param param = new GithubParser.Param(this, user, mode, mainActivity);
+        GithubParser.Param param = new GithubParser.Param(this, user, mode, profileImage_width, profileImage_height, mainActivity);
         startDataExtraction(param);
     }
 }

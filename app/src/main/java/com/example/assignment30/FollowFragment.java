@@ -17,7 +17,7 @@ import android.widget.TextView;
  *
  * @author      Scott Wolfskill, wolfski2
  * @created     10/23/2017
- * @last_edit   11/07/2017
+ * @last_edit   02/05/2019
  */
 public class FollowFragment extends ActivityFragment implements View.OnClickListener {
     public MainActivity parent = null;
@@ -100,7 +100,8 @@ public class FollowFragment extends ActivityFragment implements View.OnClickList
                     //3. Start loading & populating the DB asynchronously
                     if(needNewData) {
                         GithubParser.Param param =
-                                new GithubParser.Param(parent.db, curProfile.user.getLogin(), mode, parent);
+                                new GithubParser.Param(parent.db, curProfile.user.getLogin(), mode,
+                                                       parent.db.profileImage_width, parent.db.profileImage_height, parent);
                         parent.db.startDataExtraction(param);
                     }
                     break;

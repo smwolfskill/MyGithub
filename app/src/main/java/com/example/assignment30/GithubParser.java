@@ -10,7 +10,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.URL;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -29,7 +28,7 @@ import org.eclipse.egit.github.core.service.UserService;
  *                  for obtaining GitHub info via their API and parsing it.
  * @author      Scott Wolfskill, wolfski2
  * @created     10/23/2017
- * @last_edit   01/29/2019
+ * @last_edit   02/05/2019
  */
 public class GithubParser extends AsyncTask<GithubParser.Param, Void, GithubParser.ReturnInfo> {
     public static final String login_user_default = "smwolfskill"; //default user if no other login info specified
@@ -46,7 +45,10 @@ public class GithubParser extends AsyncTask<GithubParser.Param, Void, GithubPars
         public DB db;
         public String targetName;
         public boolean[] mode;
+        public int profileImage_width;
+        public int profileImage_height;
         public MainActivity mainActivity; //for showing popup messages if exceptions
+
         /**
          * Create a new Param to pass into this parser.
          * @param db DB to link data to after parsing.
@@ -58,12 +60,18 @@ public class GithubParser extends AsyncTask<GithubParser.Param, Void, GithubPars
          *             mode[3] true => acquire followers of (targetName).
          *             mode[4] true => acquire notifications of login_user.
          *             mode[5] true => search mode.
+         * @param profileImage_width minimum width of compressed profile image to obtain (if any)
+         * @param profileImage_height minimum height of compressed profile image to obtain (if any)
+         * @param mainActivity Non-null MainActivity to send messages to if exceptions occur.
          */
-        public Param(DB db, String targetName, boolean[] mode, MainActivity mainActivity) {
+        public Param(DB db, String targetName, boolean[] mode,
+                     int profileImage_width, int profileImage_height, MainActivity mainActivity) {
             this.db = db;
             this.targetName = targetName;
             if(mode.length != 6) throw new IllegalArgumentException("mode must be length 6!");
             this.mode = mode;
+            this.profileImage_width = profileImage_width;
+            this.profileImage_height = profileImage_height;
             this.mainActivity = mainActivity;
         }
     }
@@ -168,8 +176,9 @@ public class GithubParser extends AsyncTask<GithubParser.Param, Void, GithubPars
         ReturnInfo parsed = new ReturnInfo(param[0].db, param[0].mode[5]);
         if (param[0].mode[0]) { //need to acquire profile w/ username 'targetName'
             try {
-                parsed.profile = getProfile(param[0].targetName);
-            } catch (IOException e) {
+                parsed.profile = getProfile(param[0].targetName,
+                                            param[0].profileImage_width, param[0].profileImage_height);
+            } catch (Exception e) {
                 errMessages.push(e.getMessage());
             }
         }
@@ -189,11 +198,13 @@ public class GithubParser extends AsyncTask<GithubParser.Param, Void, GithubPars
         if (param[0].mode[2]) {
             try {
                 if (!param[0].mode[5]) { // get following of user at targetName
-                    parsed.following = getFollowing(param[0].targetName);
+                    parsed.following = getFollowing(param[0].targetName,
+                                                    param[0].profileImage_width, param[0].profileImage_height);
                 } else { //search mode: get users search results w/ username close to targetName
-                    parsed.following = getUsers_search(param[0].targetName);
+                    parsed.following = getUsers_search(param[0].targetName,
+                                                       param[0].profileImage_width, param[0].profileImage_height);
                 }
-            } catch (IOException e) {
+            } catch (Exception e) {
                 if(!errMessages.contains(e.getMessage())) { //add to message if different
                     errMessages.push(e.getMessage());
                 }
@@ -201,8 +212,9 @@ public class GithubParser extends AsyncTask<GithubParser.Param, Void, GithubPars
         }
         if (param[0].mode[3]) {
             try {
-                parsed.followers = getFollowers(param[0].targetName);
-            }  catch (IOException e) {
+                parsed.followers = getFollowers(param[0].targetName,
+                                                param[0].profileImage_width, param[0].profileImage_height);
+            }  catch (Exception e) {
                 if(!errMessages.contains(e.getMessage())) { //add to message if different
                     errMessages.push(e.getMessage());
                 }
@@ -255,9 +267,11 @@ public class GithubParser extends AsyncTask<GithubParser.Param, Void, GithubPars
     /**
      * Get and parse Profile information for the user, and return the info as a new Profile.
      * @param targetName GitHub username of target to obtain Profile of. If null, does login_user
+     * @param profileImage_width Minimum width to compress targetName's profile picture to.
+     * @param profileImage_height Minimum height to compress targetName's profile picture to.
      * @return Profile of user with targetName or login_token.
     */
-    public Profile getProfile(String targetName) throws IOException {
+    public Profile getProfile(String targetName, int profileImage_width, int profileImage_height) throws Exception {
         Log.d("getProfile", "Starting Profile extraction for " + targetName + "...");
         Profile profile = null;
 
@@ -275,15 +289,15 @@ public class GithubParser extends AsyncTask<GithubParser.Param, Void, GithubPars
             }
 
             //Get profile pic:
-            Drawable profilePic = getProfilePic(usr);
+            Drawable profilePic = ImageParser.getProfileImage(usr, profileImage_width, profileImage_height);
 
             //Create profile.
             profile = new Profile(usr, profilePic);
             Log.d("getProfile", "Parsed Profile:");
             profile.logData("getProfile");
             Log.d("getProfile", "Profile extraction finished successfully.");
-        } catch (IOException e) {
-            Log.e("getProfile", "API FAILED w/ IOException msg. '" + e.getMessage() + "'");
+        } catch (Exception e) {
+            Log.e("getProfile", "API FAILED w/ Exception msg. '" + e.getMessage() + "'");
             throw e;
         }
 
@@ -331,29 +345,34 @@ public class GithubParser extends AsyncTask<GithubParser.Param, Void, GithubPars
     /**
      * Get and parse list of users (profile) is following.
      * @param targetName GitHub username of target to obtain Following of.
+     * @param profileImage_width Minimum width to compress targetName's profile picture to.
+     * @param profileImage_height Minimum height to compress targetName's profile picture to.
      */
-    public Profile[] getFollowing(String targetName) throws IOException {
+    public Profile[] getFollowing(String targetName, int profileImage_width, int profileImage_height) throws Exception {
         Log.d("getFollow", "Starting following extraction on target '" + targetName + "'...");
-        return getFollow(targetName, true);
+        return getFollow(targetName, profileImage_width, profileImage_height, true);
     }
 
     /**
      * Get and parse list of users who follow (profile).
      * @param targetName GitHub username of target to obtain Followers of.
-     *
+     * @param profileImage_width Minimum width to compress targetName's profile picture to.
+     * @param profileImage_height Minimum height to compress targetName's profile picture to.
      */
-    public Profile[] getFollowers(String targetName) throws IOException {
+    public Profile[] getFollowers(String targetName, int profileImage_width, int profileImage_height) throws Exception {
         Log.d("getFollow", "Starting followers extraction on target '" + targetName + "'...");
-        return getFollow(targetName, false);
+        return getFollow(targetName, profileImage_width, profileImage_height, false);
     }
 
     /**
      * Gets either the following or followers of a GitHub user and returns them.
      * @param targetName GitHub username of target to obtain following or followers of.
+     * @param profileImage_width Minimum width to compress targetName's profile picture to.
+     * @param profileImage_height Minimum height to compress targetName's profile picture to.
      * @param following If true, gets following of targetName. IF false, gets followers of targetName.
      * @return Array of Profiles that are either followers or following targetName.
      */
-    private Profile[] getFollow(String targetName, boolean following) throws IOException {
+    private Profile[] getFollow(String targetName, int profileImage_width, int profileImage_height, boolean following) throws Exception {
         Profile[] follows = null;
         String follow = "/";
         if(following) {
@@ -382,14 +401,15 @@ public class GithubParser extends AsyncTask<GithubParser.Param, Void, GithubPars
              * (missing repos, following, followers which will optionally be loaded later) */
             follows = new Profile[follow_users.length];
             for(int i = 0; i < follow_users.length; i++) {
-                follows[i] = new Profile(follow_users[i], getProfilePic(follow_users[i]));
+                Drawable profileImage = ImageParser.getProfileImage(follow_users[i], profileImage_width, profileImage_height);
+                follows[i] = new Profile(follow_users[i], profileImage);
                 //Log.d("getFollow", follow + " parsed Profile #" + i + ":");
                 //follows[i].logData("getFollow");
             }
 
             Log.d("getFollow", follow + " extraction finished successfully.");
-        } catch (IOException e) {
-            Log.e("getFollow", follow + " API FAILED w/ IOException msg. '" + e.getMessage() + "'");
+        } catch (Exception e) {
+            Log.e("getFollow", follow + " API FAILED w/ Exception msg. '" + e.getMessage() + "'");
             throw e;
         }
 
@@ -435,9 +455,11 @@ public class GithubParser extends AsyncTask<GithubParser.Param, Void, GithubPars
     /**
      * Get searched users as Profiles.
      * @param usernameCloseTo Username/login to search for.
+     * @param profileImage_width Minimum width to compress all found profile pictures to.
+     * @param profileImage_height Minimum height to compress all found profile pictures to.
      * @return Any close/matching Profiles found.
      */
-    public Profile[] getUsers_search(String usernameCloseTo) throws IOException {
+    public Profile[] getUsers_search(String usernameCloseTo, int profileImage_width, int profileImage_height) throws Exception {
         Log.d("getUsers_search", "Starting search users extraction...");
         Profile[] profiles = null;
 
@@ -459,14 +481,15 @@ public class GithubParser extends AsyncTask<GithubParser.Param, Void, GithubPars
              * (missing repos, following, followers which will optionally be loaded later) */
             profiles = new Profile[searched.items.length];
             for(int i = 0; i < searched.items.length; i++) {
-                profiles[i] = new Profile(searched.items[i], getProfilePic(searched.items[i]));
+                Drawable profileImage = ImageParser.getProfileImage(searched.items[i], profileImage_width, profileImage_height);
+                profiles[i] = new Profile(searched.items[i], profileImage);
                 //Log.d("getUsers_search", " parsed Profile #" + i + ":");
                 //profiles[i].logData("getUsers_search");
             }
 
             Log.d("getUsers_search", "extraction finished successfully.");
-        } catch (IOException e) {
-            Log.e("getUsers_search", "API FAILED w/ IOException msg. '" + e.getMessage() + "'");
+        } catch (Exception e) {
+            Log.e("getUsers_search", "API FAILED w/ Exception msg. '" + e.getMessage() + "'");
             throw e;
         }
         return profiles;
@@ -513,18 +536,6 @@ public class GithubParser extends AsyncTask<GithubParser.Param, Void, GithubPars
             throw e;
         }
         return repos;
-    }
-
-    /**
-     * Get and parse user profile image.
-     * @param usr User to obtain profile image from.
-     * @return Drawable profile avatar image.
-     * @throws IOException
-     */
-    public static Drawable getProfilePic(User usr) throws IOException {
-        URL picUrl = new URL(usr.getAvatarUrl());
-        InputStream picStream = (InputStream) picUrl.getContent();
-        return Drawable.createFromStream(picStream, "src name");
     }
 
 }

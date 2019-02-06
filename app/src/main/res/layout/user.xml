@@ -16,8 +16,8 @@
 
     <ImageView
         android:id="@+id/iv_User_profilePic"
-        android:layout_width="70dp"
-        android:layout_height="70dp"
+        android:layout_width="@dimen/profilePic_width_small"
+        android:layout_height="@dimen/profilePic_height_small"
         app:srcCompat="@android:drawable/presence_busy" />
 
     <TextView

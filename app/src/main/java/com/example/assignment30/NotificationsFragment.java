@@ -16,7 +16,7 @@ import android.widget.TextView;
  *
  * @author      Scott Wolfskill, wolfski2
  * @created     11/06/2017
- * @last_edit   01/29/2019
+ * @last_edit   02/05/2019
  */
 public class NotificationsFragment extends ActivityFragment implements View.OnClickListener {
     public MainActivity parent = null;
@@ -75,7 +75,7 @@ public class NotificationsFragment extends ActivityFragment implements View.OnCl
             notificationXmlIds = null;
             resetView();
             GithubParser.Param param = new GithubParser.Param(db, "",
-                    new boolean[] {false, false, false, false, true, false}, parent); //only notifications
+                    new boolean[] {false, false, false, false, true, false}, db.profileImage_width, db.profileImage_height, parent); //only notifications
             db.startDataExtraction(param);
         }
     }

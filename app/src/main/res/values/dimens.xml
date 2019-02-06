@@ -3,6 +3,11 @@
     <dimen name="activity_horizontal_margin">16dp</dimen>
     <dimen name="activity_vertical_margin">16dp</dimen>
     <dimen name="nav_header_vertical_spacing">16dp</dimen>
+    <dimen name="nav_header_vertical_margin_image">26dp</dimen>
     <dimen name="nav_header_height">160dp</dimen>
     <dimen name="fab_margin">16dp</dimen>
+    <dimen name="profilePic_width_small">70dp</dimen>
+    <dimen name="profilePic_height_small">70dp</dimen>
+    <dimen name="profilePic_width">110dp</dimen>
+    <dimen name="profilePic_height">110dp</dimen>
 </resources>

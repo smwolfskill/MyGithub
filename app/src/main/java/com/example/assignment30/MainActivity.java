@@ -18,7 +18,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
-import android.widget.ImageView;
 import android.widget.RadioButton;
 
 /**
@@ -26,7 +25,7 @@ import android.widget.RadioButton;
  *
  * @author      Scott Wolfskill, wolfski2
  * @created     10/23/2017
- * @last_edit   01/29/2019
+ * @last_edit   02/05/2019
  */
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
@@ -57,8 +56,12 @@ public class MainActivity extends AppCompatActivity
         //2. Make event handler, and load GitHub user/token info if present
         handler = makeHandler();
         boolean loadLoginInfoSuccess = GithubParser.LoadLoginInfo(this);
+
         //3. Init. DB and activities fragments
-        db = new DB();
+        int profilePicWidth_small = (int) getResources().getDimension(R.dimen.profilePic_width_small);
+        int profilePicHeight_small = (int) getResources().getDimension(R.dimen.profilePic_height_small);
+        Log.d("MainActivity", "profile image size will be compressed to at minimum " + profilePicWidth_small + " x " + profilePicHeight_small);
+        db = new DB(profilePicWidth_small, profilePicHeight_small); //set to always obtain smallest profile pic size
         db.initFragments(this);
 
         //4. Start loading & populating the DB asynchronously
@@ -71,12 +74,6 @@ public class MainActivity extends AppCompatActivity
         if(!loadLoginInfoSuccess) {
             ShowPopup(loadLoginInfoFailed, 1000);
         }
-        //
-        ImageView tmp = (ImageView) findViewById(R.id.iv_navHeader_profilePic);
-        if(tmp == null) {
-            Log.e("SetNavProfile", "navHeader_profilePic was null!");
-        }
-        //
     }
 
     /**
@@ -207,7 +204,7 @@ public class MainActivity extends AppCompatActivity
                             //All false except following (here meaning users), and searchMode
                             db.searchUsersFragment.resetView();
                             GithubParser.Param param = new GithubParser.Param(db, query,
-                                    new boolean[] {false, false, true, false, false, true}, this);
+                                    new boolean[] {false, false, true, false, false, true}, db.profileImage_width, db.profileImage_height, this);
                             db.startDataExtraction(param);
                         }
                         displaySelectedContent(R.id.rad_users);
@@ -218,7 +215,7 @@ public class MainActivity extends AppCompatActivity
                             //All false except repos, and searchMode
                             db.searchReposFragment.resetView();
                             GithubParser.Param param = new GithubParser.Param(db, query,
-                                    new boolean[]{false, true, false, false, false, true}, this);
+                                    new boolean[]{false, true, false, false, false, true}, db.profileImage_width, db.profileImage_height, this);
                             db.startDataExtraction(param);
                         }
                         displaySelectedContent(R.id.rad_repos);
