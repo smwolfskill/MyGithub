@@ -38,6 +38,9 @@ public class GithubParser extends AsyncTask<GithubParser.Param, Void, GithubPars
     private static String login_user_dummy = "GitHub username";
     private static String login_token_dummy = "personal access token";
 
+    private int profileImage_width;  //Minimum width to compress targetName's profile picture to.
+    private int profileImage_height; //Minimum height to compress targetName's profile picture to.
+
     /**
      * Param --- Passed as parameter into this async task.
      */
@@ -172,12 +175,13 @@ public class GithubParser extends AsyncTask<GithubParser.Param, Void, GithubPars
             throw new IllegalArgumentException("GithubParser: expected len. 1 Param array! " +
                     "(was " + param.length + ")");
         }
+        this.profileImage_width = param[0].profileImage_width;
+        this.profileImage_height = param[0].profileImage_height;
         LinkedList<String> errMessages = new LinkedList<String>(); //list of unique exception messages
         ReturnInfo parsed = new ReturnInfo(param[0].db, param[0].mode[5]);
         if (param[0].mode[0]) { //need to acquire profile w/ username 'targetName'
             try {
-                parsed.profile = getProfile(param[0].targetName,
-                                            param[0].profileImage_width, param[0].profileImage_height);
+                parsed.profile = getProfile(param[0].targetName);
             } catch (Exception e) {
                 errMessages.push(e.getMessage());
             }
@@ -198,11 +202,9 @@ public class GithubParser extends AsyncTask<GithubParser.Param, Void, GithubPars
         if (param[0].mode[2]) {
             try {
                 if (!param[0].mode[5]) { // get following of user at targetName
-                    parsed.following = getFollowing(param[0].targetName,
-                                                    param[0].profileImage_width, param[0].profileImage_height);
+                    parsed.following = getFollowing(param[0].targetName);
                 } else { //search mode: get users search results w/ username close to targetName
-                    parsed.following = getUsers_search(param[0].targetName,
-                                                       param[0].profileImage_width, param[0].profileImage_height);
+                    parsed.following = getUsers_search(param[0].targetName);
                 }
             } catch (Exception e) {
                 if(!errMessages.contains(e.getMessage())) { //add to message if different
@@ -212,8 +214,7 @@ public class GithubParser extends AsyncTask<GithubParser.Param, Void, GithubPars
         }
         if (param[0].mode[3]) {
             try {
-                parsed.followers = getFollowers(param[0].targetName,
-                                                param[0].profileImage_width, param[0].profileImage_height);
+                parsed.followers = getFollowers(param[0].targetName);
             }  catch (Exception e) {
                 if(!errMessages.contains(e.getMessage())) { //add to message if different
                     errMessages.push(e.getMessage());
@@ -267,11 +268,9 @@ public class GithubParser extends AsyncTask<GithubParser.Param, Void, GithubPars
     /**
      * Get and parse Profile information for the user, and return the info as a new Profile.
      * @param targetName GitHub username of target to obtain Profile of. If null, does login_user
-     * @param profileImage_width Minimum width to compress targetName's profile picture to.
-     * @param profileImage_height Minimum height to compress targetName's profile picture to.
      * @return Profile of user with targetName or login_token.
     */
-    public Profile getProfile(String targetName, int profileImage_width, int profileImage_height) throws Exception {
+    public Profile getProfile(String targetName) throws Exception {
         Log.d("getProfile", "Starting Profile extraction for " + targetName + "...");
         Profile profile = null;
 
@@ -345,34 +344,28 @@ public class GithubParser extends AsyncTask<GithubParser.Param, Void, GithubPars
     /**
      * Get and parse list of users (profile) is following.
      * @param targetName GitHub username of target to obtain Following of.
-     * @param profileImage_width Minimum width to compress targetName's profile picture to.
-     * @param profileImage_height Minimum height to compress targetName's profile picture to.
      */
-    public Profile[] getFollowing(String targetName, int profileImage_width, int profileImage_height) throws Exception {
+    public Profile[] getFollowing(String targetName) throws Exception {
         Log.d("getFollow", "Starting following extraction on target '" + targetName + "'...");
-        return getFollow(targetName, profileImage_width, profileImage_height, true);
+        return getFollow(targetName, true);
     }
 
     /**
      * Get and parse list of users who follow (profile).
      * @param targetName GitHub username of target to obtain Followers of.
-     * @param profileImage_width Minimum width to compress targetName's profile picture to.
-     * @param profileImage_height Minimum height to compress targetName's profile picture to.
      */
-    public Profile[] getFollowers(String targetName, int profileImage_width, int profileImage_height) throws Exception {
+    public Profile[] getFollowers(String targetName) throws Exception {
         Log.d("getFollow", "Starting followers extraction on target '" + targetName + "'...");
-        return getFollow(targetName, profileImage_width, profileImage_height, false);
+        return getFollow(targetName, false);
     }
 
     /**
      * Gets either the following or followers of a GitHub user and returns them.
      * @param targetName GitHub username of target to obtain following or followers of.
-     * @param profileImage_width Minimum width to compress targetName's profile picture to.
-     * @param profileImage_height Minimum height to compress targetName's profile picture to.
      * @param following If true, gets following of targetName. IF false, gets followers of targetName.
      * @return Array of Profiles that are either followers or following targetName.
      */
-    private Profile[] getFollow(String targetName, int profileImage_width, int profileImage_height, boolean following) throws Exception {
+    private Profile[] getFollow(String targetName, boolean following) throws Exception {
         Profile[] follows = null;
         String follow = "/";
         if(following) {
@@ -455,11 +448,9 @@ public class GithubParser extends AsyncTask<GithubParser.Param, Void, GithubPars
     /**
      * Get searched users as Profiles.
      * @param usernameCloseTo Username/login to search for.
-     * @param profileImage_width Minimum width to compress all found profile pictures to.
-     * @param profileImage_height Minimum height to compress all found profile pictures to.
      * @return Any close/matching Profiles found.
      */
-    public Profile[] getUsers_search(String usernameCloseTo, int profileImage_width, int profileImage_height) throws Exception {
+    public Profile[] getUsers_search(String usernameCloseTo) throws Exception {
         Log.d("getUsers_search", "Starting search users extraction...");
         Profile[] profiles = null;
 
