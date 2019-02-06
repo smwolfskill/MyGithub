@@ -75,8 +75,9 @@ public class NotificationsFragment extends ActivityFragment implements View.OnCl
             notificationXmlIds = null;
             resetView();
             GithubParser.Param param = new GithubParser.Param(db, "",
-                    new boolean[] {false, false, false, false, true, false}, db.profileImage_width, db.profileImage_height, parent); //only notifications
-            db.startDataExtraction(param);
+                    null, db.profileImage_width, db.profileImage_height, parent); //only notifications
+            param.setMode_NotificationsOnly();
+            db.startDataExtraction(param, false);
         }
     }
 

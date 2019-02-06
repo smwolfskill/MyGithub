@@ -62,7 +62,8 @@ public class GithubParser extends AsyncTask<GithubParser.Param, Void, GithubPars
          *             mode[2] true => acquire following of (targetName).
          *             mode[3] true => acquire followers of (targetName).
          *             mode[4] true => acquire notifications of login_user.
-         *             mode[5] true => search mode.
+         *             mode[5] true => search mode. Set mode[1] to true to search for repos,
+         *                             or mode[2] to true to search for users.
          * @param profileImage_width minimum width of compressed profile image to obtain (if any)
          * @param profileImage_height minimum height of compressed profile image to obtain (if any)
          * @param mainActivity Non-null MainActivity to send messages to if exceptions occur.
@@ -71,11 +72,82 @@ public class GithubParser extends AsyncTask<GithubParser.Param, Void, GithubPars
                      int profileImage_width, int profileImage_height, MainActivity mainActivity) {
             this.db = db;
             this.targetName = targetName;
-            if(mode.length != 6) throw new IllegalArgumentException("mode must be length 6!");
+            if(mode != null && mode.length != 6) throw new IllegalArgumentException("mode must be length 6!");
             this.mode = mode;
             this.profileImage_width = profileImage_width;
             this.profileImage_height = profileImage_height;
             this.mainActivity = mainActivity;
+        }
+
+        /**
+         * Create a new Param as a copy of another Param (note: mode array is copied by value).
+         * @param copy Param to copy all fields from.
+         */
+        public Param(Param copy) {
+            this.db = copy.db;
+            this.targetName = copy.targetName;
+            this.mode = copy.mode.clone();
+            this.profileImage_width = copy.profileImage_width;
+            this.profileImage_height = copy.profileImage_height;
+            this.mainActivity = copy.mainActivity;
+        }
+
+        public void setMode_ProfileOnly() {
+            setMode_IndexOnly(0);
+            mode[5] = false;
+        }
+
+        public void setMode_ReposOnly() {
+            setMode_IndexOnly(1);
+            mode[5] = false;
+        }
+
+        public void setMode_FollowingOnly() {
+            setMode_IndexOnly(2);
+            mode[5] = false;
+        }
+
+        public void setMode_FollowersOnly() {
+            setMode_IndexOnly(3);
+            mode[5] = false;
+        }
+
+        public void setMode_NotificationsOnly() {
+            setMode_IndexOnly(4);
+            mode[5] = false;
+        }
+
+        public void setMode_SearchUsers() {
+            setMode_IndexOnly(2);
+            mode[5] = true;
+        }
+
+        public void setMode_SearchRepos() {
+            setMode_IndexOnly(1);
+            mode[5] = true;
+        }
+
+        /**
+         * Sets all indices of mode to false, except for the one at indexToSet.
+         * Does not change mode[5] (which holds search mode true/false).
+         * @param indexToSet Index of mode[] to set to true, with all others false (mode[5] unchanged).
+         */
+        public void setMode_IndexOnly(int indexToSet)
+        {
+            initMode();
+            for(int i = 0; i < mode.length - 1; i++) {
+                if(i == indexToSet) {
+                    mode[i] = true;
+                } else {
+                    mode[i] = false;
+                }
+            }
+        }
+
+        private void initMode() {
+            if(mode == null) {
+                mode = new boolean[6];
+            }
         }
     }
 

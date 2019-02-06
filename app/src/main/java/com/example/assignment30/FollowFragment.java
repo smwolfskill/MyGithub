@@ -91,18 +91,18 @@ public class FollowFragment extends ActivityFragment implements View.OnClickList
                         parent.db.followersFragment.loadContent(curProfile.followers);
 
                     }
-                    mode[4] = false; //don't need notification
+                    mode[4] = false; //don't need notifications
                     mode[5] = false; //not searching
 
                     //2. Show profile fragment page: loading
                     parent.displaySelectedContent(R.id.nav_profile);
 
-                    //3. Start loading & populating the DB asynchronously
+                    //3. Start loading & populating the DB asynchronously, in separate requests for each data type we need
                     if(needNewData) {
                         GithubParser.Param param =
                                 new GithubParser.Param(parent.db, curProfile.user.getLogin(), mode,
                                                        parent.db.profileImage_width, parent.db.profileImage_height, parent);
-                        parent.db.startDataExtraction(param);
+                        parent.db.startDataExtraction(param, true);
                     }
                     break;
                 }

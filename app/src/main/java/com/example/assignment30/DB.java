@@ -54,13 +54,16 @@ public class DB {
      * Start async task that will interact over network with GitHub API
      * to start data extraction from GitHub API. Returns once task started.
      * @param param GithubParser param to call the async task with.
+     * @param extractSeparately If true, will extract all data in separate requests (one request for each type of data requested).
      */
-    public void startDataExtraction(GithubParser.Param param) {
-        if(param.mode[0]) { //If acquiring profile, acquire it individually right away for faster return
+    public void startDataExtraction(GithubParser.Param param, boolean extractSeparately) {
+        /*if(param.mode[0]) { //If acquiring profile, acquire it individually right away for faster return
             GithubParser.Param profileParam = new GithubParser.Param(param.db, param.targetName,
                     new boolean[] {true, false, false, false, false, false},
                     profileImage_width, profileImage_height, param.mainActivity);
             param.mode[0] = false;
+            GithubParser.Param profileParam = new GithubParser.Param(param);
+            profileParam.setMode_ProfileOnly();
             new GithubParser().execute(profileParam);
         }
         //Acquire all other fields if specified.
@@ -68,6 +71,19 @@ public class DB {
             if(param.mode[4]) {
                 notificationsFragment.resetView();
             }
+            new GithubParser().execute(param);
+        }*/
+        if(extractSeparately) {
+            //Create a separate GitHubParser for each type of data requested in param.mode
+            for (int i = 0; i <= 4; i++) {
+                if (param.mode[i]) {
+                    GithubParser.Param separateParam = new GithubParser.Param(param);
+                    separateParam.setMode_IndexOnly(i); //mode[5] (search mode true/false) unchanged
+                    new GithubParser().execute(separateParam);
+                }
+            }
+        } else {
+            //Fetch all data in one GithubParser request
             new GithubParser().execute(param);
         }
     }
@@ -118,11 +134,12 @@ public class DB {
      */
     public static TextView createTv_dne(Context context) {
         TextView tv_dne = new TextView(context);
-        tv_dne.setText("There doesn't seem to be anything here.");
+        //tv_dne.setText("There doesn't seem to be anything here.");
+        tv_dne.setText(R.string.noDataFound);
         return tv_dne;
     }
 
-    public void ExtractLoginProfile_full(boolean getNotifications, MainActivity mainActivity) {
+    public void ExtractLoginProfile_full(boolean getNotifications, boolean extractSeparately, MainActivity mainActivity) {
         String user = GithubParser.GetLoginUser();
         String loadedUser = profileFragment.GetProfileUsername();
         if(loadedUser == null || !loadedUser.equals(user)) { //don't query API if already loaded the data
@@ -131,7 +148,7 @@ public class DB {
             boolean notifications = getNotifications && GithubParser.LoginTokenSet();
             boolean[] mode = new boolean[]{true, true, true, true, notifications, false}; //get all 4: profile, repos, following, followers
             GithubParser.Param param = new GithubParser.Param(this, user, mode, profileImage_width, profileImage_height, mainActivity);
-            startDataExtraction(param);
+            startDataExtraction(param, extractSeparately);
         }
     }
 
@@ -140,25 +157,25 @@ public class DB {
         String loadedReposOwner = reposFragment.GetReposOwner();
         if(loadedReposOwner == null || !loadedReposOwner.equals(user)) { //don't query API if already loaded the data
             //reposFragment.resetView();
-            boolean[] mode = new boolean[]{false, true, false, false, false, false}; //get only repos
-            GithubParser.Param param = new GithubParser.Param(this, user, mode, profileImage_width, profileImage_height, mainActivity);
-            startDataExtraction(param);
+            GithubParser.Param param = new GithubParser.Param(this, user, null, profileImage_width, profileImage_height, mainActivity);
+            param.setMode_ReposOnly();
+            startDataExtraction(param, false);
         }
     }
 
     public void ExtractLoginFollowing(MainActivity mainActivity) {
         String user = GithubParser.GetLoginUser();
         //followingFragment.resetView();
-        boolean[] mode = new boolean[]{false, false, true, false, false, false}; //get only following
-        GithubParser.Param param = new GithubParser.Param(this, user, mode, profileImage_width, profileImage_height, mainActivity);
-        startDataExtraction(param);
+        GithubParser.Param param = new GithubParser.Param(this, user, null, profileImage_width, profileImage_height, mainActivity);
+        param.setMode_FollowingOnly();
+        startDataExtraction(param, false);
     }
 
     public void ExtractLoginFollowers(MainActivity mainActivity) {
         String user = GithubParser.GetLoginUser();
         //followersFragment.resetView();
-        boolean[] mode = new boolean[]{false, false, false, true, false, false}; //get only followers
-        GithubParser.Param param = new GithubParser.Param(this, user, mode, profileImage_width, profileImage_height, mainActivity);
-        startDataExtraction(param);
+        GithubParser.Param param = new GithubParser.Param(this, user, null, profileImage_width, profileImage_height, mainActivity);
+        param.setMode_FollowersOnly();
+        startDataExtraction(param, false);
     }
 }

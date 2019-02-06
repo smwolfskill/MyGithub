@@ -64,8 +64,8 @@ public class MainActivity extends AppCompatActivity
         db = new DB(profilePicWidth_small, profilePicHeight_small); //set to always obtain smallest profile pic size
         db.initFragments(this);
 
-        //4. Start loading & populating the DB asynchronously
-        db.ExtractLoginProfile_full(true, this);
+        //4. Start loading & populating the DB asynchronously: extract login profile in separate requests
+        db.ExtractLoginProfile_full(true, true,this);
 
         //5. Show content with default page
         displaySelectedContent(R.id.nav_profile);   // set default content as Profile page
@@ -165,8 +165,8 @@ public class MainActivity extends AppCompatActivity
         // Handle navigation view item clicks here.
         int id = item.getItemId();
         switch(id) {
-            case R.id.nav_profile: //load user (or default) profile
-                db.ExtractLoginProfile_full(false, this);
+            case R.id.nav_profile: //load user (or default) profile fully, w/ separate requests per data type
+                db.ExtractLoginProfile_full(false, true, this);
                 break;
             case R.id.nav_repos: //load user (or default) repositories
                 db.ExtractLoginRepos(this);
@@ -204,8 +204,9 @@ public class MainActivity extends AppCompatActivity
                             //All false except following (here meaning users), and searchMode
                             db.searchUsersFragment.resetView();
                             GithubParser.Param param = new GithubParser.Param(db, query,
-                                    new boolean[] {false, false, true, false, false, true}, db.profileImage_width, db.profileImage_height, this);
-                            db.startDataExtraction(param);
+                                    null, db.profileImage_width, db.profileImage_height, this);
+                            param.setMode_SearchUsers();
+                            db.startDataExtraction(param, false);
                         }
                         displaySelectedContent(R.id.rad_users);
                         oldUsersQuery = query;
@@ -215,8 +216,9 @@ public class MainActivity extends AppCompatActivity
                             //All false except repos, and searchMode
                             db.searchReposFragment.resetView();
                             GithubParser.Param param = new GithubParser.Param(db, query,
-                                    new boolean[]{false, true, false, false, false, true}, db.profileImage_width, db.profileImage_height, this);
-                            db.startDataExtraction(param);
+                                    null, db.profileImage_width, db.profileImage_height, this);
+                            param.setMode_SearchRepos();
+                            db.startDataExtraction(param, false);
                         }
                         displaySelectedContent(R.id.rad_repos);
                         oldReposQuery = query;
